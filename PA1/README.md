@@ -12,6 +12,7 @@ and vefity the correctness using seven benchmarks.
 - benchmark : seven input files of dat extension
 - unittest : unit test
 - 3rd-party : third party library for unit test usage only
+- CMakeList.txt : cmake file
 
 ## Build
 ```
@@ -24,6 +25,12 @@ make
 ```
 cd build
 ./fm ../benchmark/input_6.dat ./output_6.dat
+```
+
+## Unit Test
+```
+cd build
+make test
 ```
 
 ## Reference
