@@ -2,7 +2,7 @@
 
 
 ## What is this about?
-This is a program assianment of ECE5960-Physical-Design-Algorithm..
+This is a program assianment of ECE5960-Physical-Design-Algorithm.
 The purpose of this assignment is to implement FM algorithm
 and vefity the correctness using seven benchmarks. 
 
@@ -27,5 +27,5 @@ cd build
 ```
 
 ## Reference
-- C.M.Fiduccia and R.M. Mattheyse, "A Linear-Time Heuristic for Improving Network Partitions," in "*19th Design Automation Conference*," 1982 [link](https://web.eecs.umich.edu/~mazum/fmcut1.pdf)
+- C.M.Fiduccia and R.M. Mattheyse, "A Linear-Time Heuristic for Improving Network Partitions," in "*19th Design Automation Conference*," 1982 [[link](https://web.eecs.umich.edu/~mazum/fmcut1.pdf)]
 - https://en.wikipedia.org/wiki/Fiduccia–Mattheyses_algorithm
