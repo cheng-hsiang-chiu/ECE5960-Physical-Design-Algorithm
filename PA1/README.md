@@ -12,7 +12,7 @@ and vefity the correctness using seven benchmarks.
 - benchmark : seven input files of dat extension
 - unittest : unit test
 - 3rd-party : third party library for unit test usage only
-- CMakeList.txt : cmake file
+- CMakeLists.txt : cmake file
 
 ## Build
 ```
