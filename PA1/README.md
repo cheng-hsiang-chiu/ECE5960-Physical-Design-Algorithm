@@ -13,6 +13,7 @@ and vefity the correctness using seven benchmarks.
 - unittest : unit test
 - 3rd-party : third party library for unit test usage only
 - CMakeLists.txt : cmake file
+- checker_linux : correctness checking
 
 ## Build
 ```
@@ -32,6 +33,12 @@ cd build
 cd build
 make test
 ```
+
+## Verify correctness
+```
+./checker_linux ./benchmark/input_6.dat ./build/output_6.dat
+```
+
 
 ## Reference
 - C.M.Fiduccia and R.M. Mattheyse, "A Linear-Time Heuristic for Improving Network Partitions," in "*19th Design Automation Conference*," 1982 [[link](https://web.eecs.umich.edu/~mazum/fmcut1.pdf)]
