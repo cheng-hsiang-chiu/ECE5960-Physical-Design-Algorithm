@@ -57,8 +57,10 @@ int main(int argc, char** argv) {
   std::srand(std::time(nullptr));
 
   std::string input_file(argv[1]);
+  
+  std::string output_file(argv[2]);
 
-  Hypergraph hypergraph(input_file);
+  Hypergraph hypergraph(input_file, output_file);
 
   std::cout << "r factor = " << hypergraph.r_factor << '\n';
 
@@ -84,6 +86,8 @@ int main(int argc, char** argv) {
   hypergraph.display_bucket();
 
   hypergraph.run_fm();
+
+  hypergraph.output_answer();
 
   return 0;
 }

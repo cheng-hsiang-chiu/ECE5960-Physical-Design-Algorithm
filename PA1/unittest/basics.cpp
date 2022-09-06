@@ -7,13 +7,15 @@
 #include <unordered_map>
 #include "graph.hpp"
 
-std::string input_file("/home/chchiu/Documents/courses/ece5960/PA1/unittest/test.dat");
+std::string input_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/unittest/test.dat");
+
+std::string output_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/build/out.dat");
 
 // verify the initial gain
 TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
   std::srand(std::time(nullptr));
  
-  Hypergraph hypergraph(input_file);
+  Hypergraph hypergraph(input_file, output_file);
   //hypergraph.traverse();
 
   std::unordered_map<std::string, Cell>::iterator it;
@@ -148,7 +150,7 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
 // verify the initial connected cells 
 TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
   
-  Hypergraph hypergraph(input_file);
+  Hypergraph hypergraph(input_file, output_file);
 
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -222,7 +224,7 @@ TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
 TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
   REQUIRE(true == true);
   
-  Hypergraph hypergraph(input_file);
+  Hypergraph hypergraph(input_file, output_file);
   
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
