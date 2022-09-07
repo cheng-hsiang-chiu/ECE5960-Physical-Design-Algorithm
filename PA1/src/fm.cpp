@@ -75,6 +75,9 @@ int main(int argc, char** argv) {
             << hypergraph.area_upper_bound << '\n';
 
   std::cout << "hypergraph.max_gain = " << hypergraph.max_gain << '\n';
+  
+  std::cout << "hypergraph.min_gain = " << hypergraph.min_gain << '\n';
+  
   hypergraph.display_partition();
 
   hypergraph.display_cut();

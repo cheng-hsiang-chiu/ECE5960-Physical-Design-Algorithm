@@ -63,6 +63,8 @@ public:
   double max_area = 1.0;
 
   int max_gain = INT_MIN;
+  
+  int min_gain = INT_MAX;
 
   size_t num_cells_p0 = 0;
 
@@ -134,7 +136,7 @@ Hypergraph::Hypergraph(std::string& input_file, std::string& output_file) {
     while (std::getline(ss, line, ' ')) {
       if (line != ";" && line != "NET" && line.length() != 0) {
         // net string
-        if (line[0] == 'n') {
+        if (line[0] == 'n' || line[0] == 'T') {
           net_name = line;
 
           Net n;
@@ -284,6 +286,7 @@ inline void Hypergraph::initialize_gain() {
 
     itr1->second.gain = fs-te;
     max_gain = itr1->second.gain > max_gain ? itr1->second.gain : max_gain;
+    min_gain = itr1->second.gain < min_gain ? itr1->second.gain : min_gain;
   }
   //auto end = std::chrono::high_resolution_clock::now();
   //std::cout << "initialize_gain() costs "
@@ -379,36 +382,36 @@ inline bool Hypergraph::meet_balance_criterion(Cell* candidate) const {
   if (candidate->locked == true) {
     return false;
   }
-  std::cout << "p0:" << num_cells_p0 << '\n';
+  //std::cout << "p0:" << num_cells_p0 << '\n';
   size_t num_cells_p1 = num_cells() - num_cells_p0;
   // if moving candiate form p0 to p1 a valid move  
   if (candidate->partition == 0) {
     if (area_lower_bound < (num_cells_p0-1) &&
         area_upper_bound > (num_cells_p0-1)) {
-      std::cout << "true\n";
+      //std::cout << "true\n";
       return true;
     }
     else if (area_lower_bound < (num_cells_p1+1) &&
         area_upper_bound > (num_cells_p1+1)) {
-      std::cout << "true\n";
+      //std::cout << "true\n";
       return true;
     }
-    std::cout << "false\n";
+    //std::cout << "false\n";
     return false;
   }
   // if moving candidate from p1 to p0 a valid move
   else {
     if (area_lower_bound < (num_cells_p0+1) &&
         area_upper_bound > (num_cells_p0+1)) {
-      std::cout << "true\n";
+      //std::cout << "true\n";
       return true;
     }
     else if (area_lower_bound < (num_cells_p1-1) &&
         area_upper_bound > (num_cells_p1-1)) {
-      std::cout << "true\n";
+      //std::cout << "true\n";
       return true;
     }
-    std::cout << "false\n";
+    //std::cout << "false\n";
     return false;
   }
 }
@@ -419,15 +422,16 @@ inline void Hypergraph::run_fm() {
   size_t cnt = 0;
   
   while (cnt < num_cells()) {
+    std::cout << "cnt = " << cnt << "/" << num_cells() << '\n';
     Cell* head = bucket[max_gain + num_nets()];
-    std::cout << "-------------------------\n";
-    std::cout << "Max gain = " << max_gain << '\n';
-    std::cout << "Testing cell " << head->name << " of gain " << head->gain << '\n';
+    //std::cout << "-------------------------\n";
+    //std::cout << "Max gain = " << max_gain << '\n';
+    //std::cout << "Testing cell " << head->name << " of gain " << head->gain << '\n';
     while (head) {
       if (meet_balance_criterion(head)) {
-        std::cout << "Move cell " << head->name 
-                  << " from " << head->partition
-                  << " to " << !(head->partition) << '\n';
+        //std::cout << "Move cell " << head->name 
+        //          << " from " << head->partition
+        //          << " to " << !(head->partition) << '\n';
         if (head->partition == 0) {
           --num_cells_p0;
         }
@@ -440,6 +444,11 @@ inline void Hypergraph::run_fm() {
         int old_gain = head->gain;
         head->gain = -1 * old_gain;
         update_bucket(old_gain+num_nets(), head); 
+        
+        max_gain = max_gain > head->gain
+                 ? max_gain : head->gain;
+        min_gain = min_gain < head->gain
+                 ? min_gain : head->gain;
        
         std::set<Cell*>::iterator itr;
         for (itr = head->connected_cells.begin(); 
@@ -449,6 +458,8 @@ inline void Hypergraph::run_fm() {
           update_gain(*itr);
           max_gain = max_gain > (*itr)->gain
                    ? max_gain : (*itr)->gain;
+          min_gain = min_gain < (*itr)->gain
+                   ? min_gain : (*itr)->gain;
           update_bucket(old_gain+num_nets(), *itr);
         }
 
@@ -467,20 +478,28 @@ inline void Hypergraph::run_fm() {
     //display_bucket();
     //std::cout << "------------------------\n";
     // 
+    //std::cout <<"max = " << max_gain << ", min = " << min_gain <<'\n';
     if (head == nullptr) {
       --max_gain;  
+    }
+    if (max_gain < min_gain) {
+      break;
     }
     // search for the new max_gain if old max_gain does not exist
     while (bucket[max_gain+num_nets()] == nullptr) {
       --max_gain;
     }
+    if (max_gain < min_gain) {
+      break;
+    }
   }
-  display_locked_cells();
+  //display_locked_cells();
   
   size_t idx = find_max_cumulative_gain();
   //std::cout << "idx = " << idx << '\n';
   if (idx != num_cells() - 1) {
     for (size_t i = locked_cells.size()-1; i > idx; --i) {
+      std::cout << "recover i = " << i << '\n';
       recover(locked_cells[i]);
     }
   }
@@ -595,6 +614,9 @@ inline void Hypergraph::update_bucket(int old_index, Cell* target) {
 }
 
 inline void Hypergraph::recover(Cell* target) {
+  if (target == nullptr) {
+    return;
+  }
   int old_gain = target->gain;
 
   if (target->partition == 0) {
@@ -637,6 +659,9 @@ inline size_t Hypergraph::find_max_cumulative_gain() const {
 
 inline void Hypergraph::display_locked_cells() const {
   for (size_t i = 0; i < locked_cells.size(); ++i) {
+    if (locked_cells[i] == nullptr) {
+      return;
+    }
     std::cout << "Cell " << locked_cells[i]->name 
               << " has gain = " << locked_cells_gain[i] << '\n';
   }
