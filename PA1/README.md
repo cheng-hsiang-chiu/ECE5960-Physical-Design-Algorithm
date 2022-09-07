@@ -16,6 +16,7 @@ and vefity the correctness using seven benchmarks.
 - checker_linux : correctness checking
 
 ## Build
+To build the executable, please follow the instructions below. The default compiler is clang++.
 ```
 mkdir build
 cd build
@@ -23,18 +24,21 @@ make
 ```
 
 ## Run
+To run the executable, please follow the instructions below. Change the input files and output files according to your needs.
 ```
 cd build
 ./fm ../benchmark/input_6.dat ./output_6.dat
 ```
 
 ## Unit Test
+To run the unit tests, please follow the instructions below.
 ```
 cd build
 make test
 ```
 
 ## Verify correctness
+To verify the correctness of the executable, please follow the instructions below. Modify the input files and output files according to your needs.
 ```
 ./checker_linux ./benchmark/input_6.dat ./build/output_6.dat
 ```
