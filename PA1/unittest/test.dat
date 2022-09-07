@@ -1,4 +1,4 @@
-0.1
+0.5
 NET n1 c1 c2 ; 
 NET n2 c1 c2 c3 ;
 NET n3 c1 c4 ; 
