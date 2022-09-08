@@ -78,15 +78,23 @@ int main(int argc, char** argv) {
   
   std::cout << "hypergraph.min_gain = " << hypergraph.min_gain << '\n';
   
-  hypergraph.display_partition();
+  size_t cutsize = 0;
+  std::unordered_map<std::string, Net>::iterator itr;
+  for (itr = hypergraph.map_nets.begin(); itr != hypergraph.map_nets.end(); ++itr) {
+    if (itr->second.cut) {
+      ++cutsize;
+    }
+  }
+  std::cout << "Initial cutsize = " << cutsize <<'\n';
+  //hypergraph.display_partition();
 
-  hypergraph.display_cut();
-  
-  hypergraph.display_gain();
-   
-  hypergraph.display_connected_cells();
+  //hypergraph.display_cut();
+  //
+  //hypergraph.display_gain();
+  // 
+  //hypergraph.display_connected_cells();
 
-  hypergraph.display_bucket();
+  //hypergraph.display_bucket();
 
   hypergraph.run_fm();
 

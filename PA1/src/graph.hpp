@@ -31,6 +31,8 @@ public:
 class Net {
 public:
   bool cut = false;
+  int num_cells_p0 = 0;
+  int num_cells_p1 = 0;
   std::string name;
   std::vector<Cell*> cells;
 };
@@ -379,11 +381,11 @@ inline void Hypergraph::display_bucket() const {
 }
 
 inline bool Hypergraph::meet_balance_criterion(Cell* candidate) const {
-  if (candidate->locked == true) {
-    return false;
-  }
-  //std::cout << "p0:" << num_cells_p0 << '\n';
-  size_t num_cells_p1 = num_cells() - num_cells_p0;
+  //if (candidate->locked == true) {
+  //  return false;
+  //}
+
+  //size_t num_cells_p1 = num_cells() - num_cells_p0;
   // if moving candiate form p0 to p1 a valid move  
   if (candidate->partition == 0) {
     if (area_lower_bound < (num_cells_p0-1) &&
@@ -391,29 +393,51 @@ inline bool Hypergraph::meet_balance_criterion(Cell* candidate) const {
       //std::cout << "true\n";
       return true;
     }
-    else if (area_lower_bound < (num_cells_p1+1) &&
-        area_upper_bound > (num_cells_p1+1)) {
-      //std::cout << "true\n";
-      return true;
-    }
-    //std::cout << "false\n";
     return false;
   }
-  // if moving candidate from p1 to p0 a valid move
   else {
     if (area_lower_bound < (num_cells_p0+1) &&
         area_upper_bound > (num_cells_p0+1)) {
       //std::cout << "true\n";
       return true;
     }
-    else if (area_lower_bound < (num_cells_p1-1) &&
-        area_upper_bound > (num_cells_p1-1)) {
-      //std::cout << "true\n";
-      return true;
-    }
-    //std::cout << "false\n";
     return false;
   }
+
+
+
+  ////std::cout << "p0:" << num_cells_p0 << '\n';
+  //size_t num_cells_p1 = num_cells() - num_cells_p0;
+  //// if moving candiate form p0 to p1 a valid move  
+  //if (candidate->partition == 0) {
+  //  if (area_lower_bound < (num_cells_p0-1) &&
+  //      area_upper_bound > (num_cells_p0-1)) {
+  //    //std::cout << "true\n";
+  //    return true;
+  //  }
+  //  else if (area_lower_bound < (num_cells_p1+1) &&
+  //      area_upper_bound > (num_cells_p1+1)) {
+  //    //std::cout << "true\n";
+  //    return true;
+  //  }
+  //  //std::cout << "false\n";
+  //  return false;
+  //}
+  //// if moving candidate from p1 to p0 a valid move
+  //else {
+  //  if (area_lower_bound < (num_cells_p0+1) &&
+  //      area_upper_bound > (num_cells_p0+1)) {
+  //    //std::cout << "true\n";
+  //    return true;
+  //  }
+  //  else if (area_lower_bound < (num_cells_p1-1) &&
+  //      area_upper_bound > (num_cells_p1-1)) {
+  //    //std::cout << "true\n";
+  //    return true;
+  //  }
+  //  //std::cout << "false\n";
+  //  return false;
+  //}
 }
 
 inline void Hypergraph::run_fm() {
@@ -422,13 +446,13 @@ inline void Hypergraph::run_fm() {
   size_t cnt = 0;
   
   while (cnt < num_cells()) {
-    std::cout << "cnt = " << cnt << "/" << num_cells() << '\n';
+    //std::cout << "cnt = " << cnt << "/" << num_cells() << '\n';
     Cell* head = bucket[max_gain + num_nets()];
     //std::cout << "-------------------------\n";
     //std::cout << "Max gain = " << max_gain << '\n';
     //std::cout << "Testing cell " << head->name << " of gain " << head->gain << '\n';
     while (head) {
-      if (meet_balance_criterion(head)) {
+      if (!head->locked && meet_balance_criterion(head)) {
         //std::cout << "Move cell " << head->name 
         //          << " from " << head->partition
         //          << " to " << !(head->partition) << '\n';
@@ -499,7 +523,7 @@ inline void Hypergraph::run_fm() {
   //std::cout << "idx = " << idx << '\n';
   if (idx != num_cells() - 1) {
     for (size_t i = locked_cells.size()-1; i > idx; --i) {
-      std::cout << "recover i = " << i << '\n';
+      //std::cout << "recover i = " << i << '\n';
       recover(locked_cells[i]);
     }
   }
@@ -581,6 +605,7 @@ inline void Hypergraph::update_bucket(int old_index, Cell* target) {
     // target is the last
     else {
       target->prev->next = nullptr;
+      tail_bucket[old_index] = target->prev;
     }
   }
   // target is the first
@@ -589,8 +614,10 @@ inline void Hypergraph::update_bucket(int old_index, Cell* target) {
       bucket[old_index] = target->next;
       target->next->prev = nullptr;     
     }
+    // target is the only element
     else {
       bucket[old_index] = nullptr;
+      tail_bucket[old_index] = nullptr;
     }
   }
 
@@ -601,15 +628,20 @@ inline void Hypergraph::update_bucket(int old_index, Cell* target) {
     target->next = nullptr;
     target->prev = nullptr;
     bucket[new_index] = target;
+    tail_bucket[new_index] = target;
   }
   else {
-    Cell* head = bucket[new_index];
-    while (head->next) {
-      head = head->next;
-    }
-    head->next = target;
+    //Cell* head = bucket[new_index];
+    //while (head->next) {
+    //  head = head->next;
+    //}
+    //head->next = target;
+    //target->next = nullptr;
+    //target->prev = head;
+    tail_bucket[new_index]->next = target;
     target->next = nullptr;
-    target->prev = head;
+    target->prev = tail_bucket[new_index];
+    tail_bucket[new_index] = target;
   }
 }
 
@@ -639,7 +671,7 @@ inline void Hypergraph::recover(Cell* target) {
     update_gain(*itr);
     update_bucket(old_gain+num_nets(), *itr);
   }
-
+  target->locked = false;
 }
 
 inline size_t Hypergraph::find_max_cumulative_gain() const {
