@@ -31,8 +31,8 @@ public:
 class Net {
 public:
   bool cut = false;
-  int num_cells_p0 = 0;
-  int num_cells_p1 = 0;
+  int cnt_cells_p0 = 0;
+  int cnt_cells_p1 = 0;
   std::string name;
   std::vector<Cell*> cells;
 };
@@ -79,6 +79,8 @@ public:
   void initialize_gain();
   
   void initialize_partition();
+
+  void initialize_count_cells();
 
   void display_partition() const;
 
@@ -384,7 +386,6 @@ inline bool Hypergraph::meet_balance_criterion(Cell* candidate) const {
   //if (candidate->locked == true) {
   //  return false;
   //}
-
   //size_t num_cells_p1 = num_cells() - num_cells_p0;
   // if moving candiate form p0 to p1 a valid move  
   if (candidate->partition == 0) {
@@ -531,13 +532,20 @@ inline void Hypergraph::run_fm() {
 
 inline void Hypergraph::update_cut_net(Cell* target) {
   for (size_t i = 0; i < target->nets.size(); ++i) {
-    target->nets[i]->cut = false;
-    for (size_t j = 0; j < target->nets[i]->cells.size(); ++j) {
-      if (target->partition != target->nets[i]->cells[j]->partition) {
-        target->nets[i]->cut = true;
-        break;   
-      }
+    if (target->nets[i]->cnt_cells_p0 != 0 && 
+        target->nets[i]->cnt_cells_p1 != 0) {
+      target->nets[i]->cut = true;
     }
+    else {
+      target->nets[i]->cut = false;
+    }
+    //target->nets[i]->cut = false;
+    //for (size_t j = 0; j < target->nets[i]->cells.size(); ++j) {
+    //  if (target->partition != target->nets[i]->cells[j]->partition) {
+    //    target->nets[i]->cut = true;
+    //    break;   
+    //  }
+    //}
   }
 }
 
@@ -570,27 +578,82 @@ inline void Hypergraph::update_gain(Cell* target) {
   target->gain = fs-te;
 }
 
+inline void Hypergraph::initialize_count_cells() {
+  std::unordered_map<std::string, Cell>::iterator itr;
+  for (itr = map_cells.begin(); itr != map_cells.end(); ++itr) {
+    //std::cout << "cell " << itr->second.name << '\n';
+    for (size_t i = 0; i < itr->second.nets.size(); ++i) {
+      if (itr->second.partition == 0) {
+        //std::cout << "partition = 0, add 1 to " << itr->second.nets[i]->name << '\n';
+        itr->second.nets[i]->cnt_cells_p0 += 1;
+      }
+      else {
+        //std::cout << "partition = 1, add 1 to " << itr->second.nets[i]->name << '\n';
+        itr->second.nets[i]->cnt_cells_p1 += 1;
+      }
+    }
+  }
+}
+
 inline void Hypergraph::initialize_partition() {
-  num_cells_p0 = num_cells()-ceil(area_lower_bound) > ceil(area_lower_bound) 
-             ? ceil(area_lower_bound) : num_cells()-ceil(area_lower_bound);
-  size_t num_cells_p1 = num_cells() - num_cells_p0; 
-  size_t cnt = num_cells_p0 > num_cells_p1
-             ? num_cells_p1 : num_cells_p0;
+  size_t p0 = 0;
+  size_t p1 = 0;
+  size_t half = num_cells()/2;
 
   std::unordered_map<std::string, Cell>::iterator itr;
   for (itr = map_cells.begin(); itr != map_cells.end(); ++itr) {
-    if (cnt == 0) {
+    // the number of cells in p0 is enough
+    if (p0 == half) {
       itr->second.partition = 1;
     }
-    else {
-      //itr->second.partition = rand()%2;
-      //if (itr->second.partition == 0) {
-      //  --cnt;
-      //}
+    else if (p1 == half) {
       itr->second.partition = 0;
-      --cnt;
+      ++num_cells_p0;
     }
+    else {
+      bool p = rand()%2;
+      if (p == 1) {
+        itr->second.partition = 1;
+        ++p1;  
+      }
+      else {
+        itr->second.partition = 0;
+        ++p0;  
+        ++num_cells_p0;
+      }
+    }
+
+    //for (size_t i = 0; i < itr->second.nets.size(); ++i) {
+    //  if (itr->second.partition == 0) {
+    //    itr->second.nets[i]->cnt_cells_p0 += 1;
+    //  }
+    //  else {
+    //    itr->second.nets[i]->cnt_cells_p1 += 1;
+    //  }
+    //}
   }
+
+  initialize_count_cells();
+  //num_cells_p0 = num_cells()-ceil(area_lower_bound) > ceil(area_lower_bound) 
+  //           ? ceil(area_lower_bound) : num_cells()-ceil(area_lower_bound);
+  //size_t num_cells_p1 = num_cells() - num_cells_p0; 
+  //size_t cnt = num_cells_p0 > num_cells_p1
+  //           ? num_cells_p1 : num_cells_p0;
+
+  //std::unordered_map<std::string, Cell>::iterator itr;
+  //for (itr = map_cells.begin(); itr != map_cells.end(); ++itr) {
+  //  if (cnt == 0) {
+  //    itr->second.partition = 1;
+  //  }
+  //  else {
+  //    //itr->second.partition = rand()%2;
+  //    //if (itr->second.partition == 0) {
+  //    //  --cnt;
+  //    //}
+  //    itr->second.partition = 0;
+  //    --cnt;
+  //  }
+  //}
 }
 
 // update the target in the bucket

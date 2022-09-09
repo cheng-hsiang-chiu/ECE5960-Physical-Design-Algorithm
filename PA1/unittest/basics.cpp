@@ -42,11 +42,15 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
 
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   
   //hypergraph.display_partition();
@@ -149,6 +153,75 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
 }
 
 
+// verify the initial count of cells in each partition
+TEST_CASE("verify_initial_count_cells_each_partition" * doctest::timeout(600)) {
+  
+  Hypergraph hypergraph(input_file, output_file);
+
+  std::unordered_map<std::string, Cell>::iterator it;
+  for (it = hypergraph.map_cells.begin(); 
+       it != hypergraph.map_cells.end(); ++it) {
+    if (it->second.name == "c1") {
+      it->second.partition = 0;
+    }
+    else if(it->second.name == "c2") {
+      it->second.partition = 0;
+    }
+    else if (it->second.name == "c3") {
+      it->second.partition = 1;
+    }
+    else if (it->second.name == "c4") {
+      it->second.partition = 1;
+    }
+    else if (it->second.name == "c5") {
+      it->second.partition = 1;
+    }
+  }
+  
+  std::unordered_map<std::string, Net>::iterator it1;
+  for (it1 = hypergraph.map_nets.begin(); 
+       it1 != hypergraph.map_nets.end(); ++it1) {
+    it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
+  }
+
+  hypergraph.max_gain = -1000000;
+  hypergraph.min_gain = 1000000;
+
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
+  hypergraph.initialize_gain(); 
+  
+  //hypergraph.traverse();
+  //hypergraph.display_partition();
+   
+  for (it1 = hypergraph.map_nets.begin(); 
+       it1 != hypergraph.map_nets.end(); ++it1) {
+    if (it1->second.name == "n1") {
+      REQUIRE(it1->second.cnt_cells_p0 == 2);
+      REQUIRE(it1->second.cnt_cells_p1 == 0);
+    }
+    else if (it1->second.name == "n2") {
+      REQUIRE(it1->second.cnt_cells_p0 == 2);
+      REQUIRE(it1->second.cnt_cells_p1 == 1);
+    }
+    else if (it1->second.name == "n3") {
+      REQUIRE(it1->second.cnt_cells_p0 == 1);
+      REQUIRE(it1->second.cnt_cells_p1 == 1);
+    }
+    else if (it1->second.name == "n4") {
+      REQUIRE(it1->second.cnt_cells_p0 == 1);
+      REQUIRE(it1->second.cnt_cells_p1 == 1);
+    }
+    else if (it1->second.name == "n5") {
+      REQUIRE(it1->second.cnt_cells_p0 == 0);
+      REQUIRE(it1->second.cnt_cells_p1 == 2);
+    }
+  }
+}
+
+
 // verify the initial connected cells 
 TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
   
@@ -178,11 +251,15 @@ TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
 
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   
   for (it = hypergraph.map_cells.begin(); 
@@ -256,11 +333,15 @@ TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
 
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
 
   hypergraph.bucket.clear();
@@ -351,13 +432,16 @@ TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
-
-  
+   
   for (it = hypergraph.map_cells.begin(); 
        it != hypergraph.map_cells.end(); 
        ++it) {
@@ -410,14 +494,27 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
 
   SUBCASE("SUB : Move c1") { 
     hypergraph.map_cells["c1"].partition = 1;
+    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n3"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n3"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n4"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n4"].cnt_cells_p1 +=1;
+
     hypergraph.update_cut_net(&(hypergraph.map_cells["c1"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c1"]));
 
@@ -471,6 +568,10 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
  
   SUBCASE("SUB : Move c2") { 
     hypergraph.map_cells["c2"].partition = 1;
+    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c2"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c2"]));
 
@@ -523,6 +624,10 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
   
   SUBCASE("SUB : Move c3") { 
     hypergraph.map_cells["c3"].partition = 0;
+    hypergraph.map_nets["n2"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n2"].cnt_cells_p1 -=1;
+    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c3"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c3"]));
 
@@ -571,6 +676,10 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
   
   SUBCASE("SUB : Move c4") { 
     hypergraph.map_cells["c4"].partition = 0;
+    hypergraph.map_nets["n3"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n3"].cnt_cells_p1 -=1;
+    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c4"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c4"]));
 
@@ -619,6 +728,8 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
   
   SUBCASE("SUB : Move c5") { 
     hypergraph.map_cells["c5"].partition = 0;
+    hypergraph.map_nets["n4"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n4"].cnt_cells_p1 -=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c5"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c5"]));
 
@@ -696,10 +807,14 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   hypergraph.bucket.clear();
   hypergraph.construct_bucket();
@@ -707,6 +822,14 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   SUBCASE("SUB : Move c1") { 
     int old_gain = hypergraph.map_cells["c1"].gain;
     hypergraph.map_cells["c1"].partition = 1;
+    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n3"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n3"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n4"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n4"].cnt_cells_p1 +=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c1"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c1"]));
     hypergraph.update_bucket(
@@ -738,6 +861,10 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   SUBCASE("SUB : Move c2") { 
     int old_gain = hypergraph.map_cells["c2"].gain;
     hypergraph.map_cells["c2"].partition = 1;
+    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
+    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
+    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c2"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c2"]));
     hypergraph.update_bucket(
@@ -773,6 +900,10 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   SUBCASE("SUB : Move c3") { 
     int old_gain = hypergraph.map_cells["c3"].gain;
     hypergraph.map_cells["c3"].partition = 0;
+    hypergraph.map_nets["n2"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n2"].cnt_cells_p1 -=1;
+    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c3"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c3"]));
     hypergraph.update_bucket(
@@ -808,6 +939,10 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   SUBCASE("SUB : Move c4") { 
     int old_gain = hypergraph.map_cells["c4"].gain;
     hypergraph.map_cells["c4"].partition = 0;
+    hypergraph.map_nets["n3"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n3"].cnt_cells_p1 -=1;
+    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c4"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c4"]));
     hypergraph.update_bucket(
@@ -843,6 +978,8 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   SUBCASE("SUB : Move c5") { 
     int old_gain = hypergraph.map_cells["c5"].gain;
     hypergraph.map_cells["c5"].partition = 0;
+    hypergraph.map_nets["n4"].cnt_cells_p0 +=1;
+    hypergraph.map_nets["n4"].cnt_cells_p1 -=1;
     hypergraph.update_cut_net(&(hypergraph.map_cells["c5"]));
     hypergraph.update_gain(&(hypergraph.map_cells["c5"]));
     hypergraph.update_bucket(
@@ -901,10 +1038,14 @@ TEST_CASE("verify_find_max_cumulative_gain" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   hypergraph.bucket.clear();
   hypergraph.construct_bucket();
@@ -972,10 +1113,14 @@ TEST_CASE("verify_recover" * doctest::timeout(600)) {
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
     it1->second.cut = false;
+    it1->second.cnt_cells_p0 = 0;
+    it1->second.cnt_cells_p1 = 0;
   }
 
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
+  hypergraph.num_cells_p0 = 2;
+  hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   hypergraph.bucket.clear();
   hypergraph.construct_bucket();
