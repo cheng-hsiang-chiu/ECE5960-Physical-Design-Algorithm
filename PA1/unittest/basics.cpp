@@ -1127,8 +1127,9 @@ TEST_CASE("verify_recover" * doctest::timeout(600)) {
 
   // recover c1 = move c1 to another partition
   SUBCASE("SUB : recover c1") {
+    
     hypergraph.recover(&(hypergraph.map_cells["c1"]));
-
+    
     for (it1 = hypergraph.map_nets.begin();
          it1 != hypergraph.map_nets.end(); ++it1) {
       if (it1->second.name == "n1") {
@@ -1167,7 +1168,6 @@ TEST_CASE("verify_recover" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == -1);
       }
     }
-    
     for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
       if (i < 3 || i == 5 || i == 6 || i > 7) {
         REQUIRE(hypergraph.bucket[i] == nullptr);
