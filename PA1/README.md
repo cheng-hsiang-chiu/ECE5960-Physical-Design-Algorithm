@@ -5,8 +5,8 @@
 This is a program assianment of ECE5960-Physical-Design-Algorithm.
 The purpose of this assignment is to implement FM algorithm
 and vefity the correctness using seven benchmarks.
-Refer to [Problem Statement](#Problem Statement),
-[Input Format](#Input Format) and [Output Format](#Output Format)
+Refer to [Problem Statement](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA1/README.md#problem-statement),
+[Input Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA1/README.md#input-format) and [Output Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA1/README.md#output-format)
 for more information.
 
 ## Problem Statement
