@@ -45,5 +45,5 @@ To verify the correctness of the executable, please follow the instructions belo
 
 
 ## Reference
-- C.M.Fiduccia and R.M. Mattheyse, "A Linear-Time Heuristic for Improving Network Partitions," in "*19th Design Automation Conference*," 1982 [[link](https://web.eecs.umich.edu/~mazum/fmcut1.pdf)]
+- C.M.Fiduccia and R.M. Mattheyse, "A Linear-Time Heuristic for Improving Network Partitions," in "*19th Design Automation Conference*," 1982 [[link](./paper/A_Linear-Time_Heuristic_for_Improving_Network_Partitions.pdf)]
 - https://en.wikipedia.org/wiki/Fiduccia–Mattheyses_algorithm
