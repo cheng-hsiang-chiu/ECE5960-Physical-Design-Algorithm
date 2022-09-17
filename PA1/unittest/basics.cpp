@@ -56,20 +56,20 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
   //hypergraph.display_partition();
 
   //hypergraph.display_cut();
-  
+  //
   //hypergraph.display_gain();
 
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    if (it1->second.name == "n2" || 
-        it1->second.name == "n3" ||
-        it1->second.name == "n4") {
-      REQUIRE(it1->second.cut == true);
-    }
-    else {
-      REQUIRE(it1->second.cut == false);
-    }
-  }
+  //for (it1 = hypergraph.map_nets.begin(); 
+  //     it1 != hypergraph.map_nets.end(); ++it1) {
+  //  if (it1->second.name == "n2" || 
+  //      it1->second.name == "n3" ||
+  //      it1->second.name == "n4") {
+  //    REQUIRE(it1->second.cut == true);
+  //  }
+  //  else {
+  //    REQUIRE(it1->second.cut == false);
+  //  }
+  //}
    
   for (it = hypergraph.map_cells.begin(); 
        it != hypergraph.map_cells.end(); ++it) {
@@ -89,65 +89,6 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
       REQUIRE(it->second.gain == 1);
     }
   }
-
-  
-  // set c1 and c2 partition 1
-  //for (it = hypergraph.map_cells.begin(); 
-  //     it != hypergraph.map_cells.end(); ++it) {
-  //  if (it->second.name == "c1") {
-  //    it->second.partition = 1;
-  //  }
-  //  else if(it->second.name == "c2") {
-  //    it->second.partition = 1;
-  //  }
-  //  else if (it->second.name == "c3") {
-  //    it->second.partition = 0;
-  //  }
-  //  else if (it->second.name == "c4") {
-  //    it->second.partition = 0;
-  //  }
-  //  else if (it->second.name == "c5") {
-  //    it->second.partition = 0;
-  //  }
-  //}
-  //
-  //for (it1 = hypergraph.map_nets.begin(); 
-  //     it1 != hypergraph.map_nets.end(); ++it1) {
-  //  it1->second.cut = false;
-  //}
-
-  //hypergraph.initialize_gain(); 
-  //
-  //for (it1 = hypergraph.map_nets.begin(); 
-  //     it1 != hypergraph.map_nets.end(); ++it1) {
-  //  if (it1->second.name == "n2" || 
-  //      it1->second.name == "n3" ||
-  //      it1->second.name == "n4") {
-  //    REQUIRE(it1->second.cut == true);
-  //  }
-  //  else {
-  //    REQUIRE(it1->second.cut == false);
-  //  }
-  //}
-  // 
-  //for (it = hypergraph.map_cells.begin(); 
-  //     it != hypergraph.map_cells.end(); ++it) {
-  //  if (it->second.name == "c1") {
-  //    REQUIRE(it->second.gain == 1);
-  //  }
-  //  else if(it->second.name == "c2") {
-  //    REQUIRE(it->second.gain == -1);
-  //  }
-  //  else if (it->second.name == "c3") {
-  //    REQUIRE(it->second.gain == 0);
-  //  }
-  //  else if (it->second.name == "c4") {
-  //    REQUIRE(it->second.gain == 0);
-  //  }
-  //  else if (it->second.name == "c5") {
-  //    REQUIRE(it->second.gain == 1);
-  //  }
-  //}
   REQUIRE(hypergraph.max_gain == 1);  
   REQUIRE(hypergraph.min_gain == -1);  
 }
@@ -302,6 +243,7 @@ TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
   }
 }
 
+
 // verify the initial bucket
 TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
   
@@ -348,19 +290,19 @@ TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
   
   hypergraph.construct_bucket();
   
-  REQUIRE(hypergraph.bucket.size() == hypergraph.num_nets()*2+1);
+  REQUIRE(hypergraph.bucket.size() == hypergraph.max_edge*2+1);
 
   for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-    if (i <= 3) {
+    if (i < 3) {
       REQUIRE(hypergraph.bucket[i] == nullptr);
     }
-    else if (i == 4) {
+    else if (i == 3) {
       Cell* head = hypergraph.bucket[i];
       REQUIRE(head->name == "c2");
       REQUIRE(head->prev == nullptr);
       REQUIRE(head->next == nullptr);
     }
-    else if (i == 5) {
+    else if (i == 4) {
       Cell* head = hypergraph.bucket[i];
       size_t cnt = 1;
       while(head->next) {
@@ -378,7 +320,7 @@ TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
       REQUIRE(head->prev->name != "c2"); 
       REQUIRE(head->prev->name != "c5"); 
     }
-    else if (i == 6) {
+    else if (i == 5) {
       Cell* head = hypergraph.bucket[i];
       size_t cnt = 1;
       while(head->next) {
@@ -396,11 +338,12 @@ TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
       REQUIRE(head->prev->name != "c3"); 
       REQUIRE(head->prev->name != "c4"); 
     }
-    else if (i >= 7) {
+    else if (i > 5) {
       REQUIRE(hypergraph.bucket[i] == nullptr);
     }
   }
 }  
+
 
 // verify the balance_criterion
 TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
@@ -464,8 +407,9 @@ TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
   } 
 }
 
-// verify the update_cut_net and update_gain
-TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
+
+// verify the update_gain of c1 moved
+TEST_CASE("verify_update_gain_move_c1" * doctest::timeout(600)) {
   Hypergraph hypergraph(input_file, output_file);
   
   std::unordered_map<std::string, Cell>::iterator it;
@@ -503,53 +447,44 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
   hypergraph.num_cells_p0 = 2;
   hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
-
-  SUBCASE("SUB : Move c1") { 
-    hypergraph.map_cells["c1"].partition = 1;
-    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n3"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n3"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n4"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n4"].cnt_cells_p1 +=1;
-
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c1"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c1"]));
-
-    for (auto & c : hypergraph.map_cells["c1"].connected_cells) {
-      hypergraph.update_gain(c);
+  hypergraph.bucket.clear();
+  hypergraph.construct_bucket();
+ 
+ 
+  SUBCASE("SUB : move c1") {
+    Cell* target = &(hypergraph.map_cells["c1"]);
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
-
     //hypergraph.traverse();
     //hypergraph.display_cut();
     //hypergraph.display_gain();
 
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == false);
-      }
-    }
-  
+    //for (it1 = hypergraph.map_nets.begin();
+    //     it1 != hypergraph.map_nets.end(); ++it1) {
+    //  if (it1->second.name == "n1") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n2") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n3") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n4") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n5") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //}
+    
     for (it = hypergraph.map_cells.begin(); 
          it != hypergraph.map_cells.end(); ++it) {
       
       if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == -1);
+        continue;
+        //REQUIRE(it->second.gain == -1);
       }
       else if (it->second.name == "c2") {
         REQUIRE(it->second.gain == 2);
@@ -564,43 +499,48 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == -1);
       }
     }
+
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 2);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 0);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 2);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 0);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 2);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 0);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 2);
+
   }
  
-  SUBCASE("SUB : Move c2") { 
-    hypergraph.map_cells["c2"].partition = 1;
-    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c2"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c2"]));
-
-    for (auto & c : hypergraph.map_cells["c2"].connected_cells) {
-      hypergraph.update_gain(c);
+  SUBCASE("SUB : move c2") {
+    Cell* target = &(hypergraph.map_cells["c2"]);
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
 
     //hypergraph.traverse();
     //hypergraph.display_cut();
     //hypergraph.display_gain();
     
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == false);
-      }
-    }
+    //for (it1 = hypergraph.map_nets.begin();
+    //     it1 != hypergraph.map_nets.end(); ++it1) {
+    //  if (it1->second.name == "n1") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n2") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n3") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n4") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n5") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //}
     
     for (it = hypergraph.map_cells.begin(); 
          it != hypergraph.map_cells.end(); ++it) {
@@ -608,7 +548,8 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == 4);
       }
       else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == 1);
+        continue;
+        //REQUIRE(it->second.gain == 1);
       }
       else if (it->second.name == "c3") {
         REQUIRE(it->second.gain == -1);
@@ -620,39 +561,42 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == 1);
       }
     }
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 2);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 0);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 2);
   }
-  
-  SUBCASE("SUB : Move c3") { 
-    hypergraph.map_cells["c3"].partition = 0;
-    hypergraph.map_nets["n2"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n2"].cnt_cells_p1 -=1;
-    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c3"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c3"]));
 
-    for (auto & c : hypergraph.map_cells["c3"].connected_cells) {
-      hypergraph.update_gain(c);
+  SUBCASE("SUB : move c3") { 
+    Cell* target = &(hypergraph.map_cells["c3"]);
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
 
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == true);
-      }
-    }
+    //for (it1 = hypergraph.map_nets.begin();
+    //     it1 != hypergraph.map_nets.end(); ++it1) {
+    //  if (it1->second.name == "n1") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n2") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n3") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n4") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n5") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //}
     
     for (it = hypergraph.map_cells.begin(); 
          it != hypergraph.map_cells.end(); ++it) {
@@ -663,7 +607,8 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == -2);
       }
       else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == 0);
+        continue;
+        //REQUIRE(it->second.gain == 0);
       }
       else if (it->second.name == "c4") {
         REQUIRE(it->second.gain == 2);
@@ -672,39 +617,42 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == 1);
       }
     }
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 2);
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 0);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 3);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 0);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 1);
   }
-  
-  SUBCASE("SUB : Move c4") { 
-    hypergraph.map_cells["c4"].partition = 0;
-    hypergraph.map_nets["n3"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n3"].cnt_cells_p1 -=1;
-    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c4"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c4"]));
 
-    for (auto & c : hypergraph.map_cells["c4"].connected_cells) {
-      hypergraph.update_gain(c);
+  SUBCASE("SUB : move c4") {
+    Cell* target = &(hypergraph.map_cells["c4"]);
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
 
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == true);
-      }
-    }
+    //for (it1 = hypergraph.map_nets.begin();
+    //     it1 != hypergraph.map_nets.end(); ++it1) {
+    //  if (it1->second.name == "n1") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n2") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n3") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n4") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n5") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //}
     
     for (it = hypergraph.map_cells.begin(); 
          it != hypergraph.map_cells.end(); ++it) {
@@ -718,43 +666,49 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == 2);
       }
       else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 0);
+        continue;
+        //REQUIRE(it->second.gain == 0);
       }
       else if (it->second.name == "c5") {
         REQUIRE(it->second.gain == 1);
       }
     }
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 2);
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 0);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 2);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 2);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 0);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 1);
   }
-  
-  SUBCASE("SUB : Move c5") { 
-    hypergraph.map_cells["c5"].partition = 0;
-    hypergraph.map_nets["n4"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n4"].cnt_cells_p1 -=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c5"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c5"]));
 
-    for (auto & c : hypergraph.map_cells["c5"].connected_cells) {
-      hypergraph.update_gain(c);
+  SUBCASE("SUB : move c5") {
+    Cell* target = &(hypergraph.map_cells["c5"]);
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
 
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == false);
-      }
-    }
+    //for (it1 = hypergraph.map_nets.begin();
+    //     it1 != hypergraph.map_nets.end(); ++it1) {
+    //  if (it1->second.name == "n1") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n2") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n3") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n4") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n5") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //}
     
     for (it = hypergraph.map_cells.begin(); 
          it != hypergraph.map_cells.end(); ++it) {
@@ -771,11 +725,24 @@ TEST_CASE("verify_update_cut_net_and_gain" * doctest::timeout(600)) {
         REQUIRE(it->second.gain == 0);
       }
       else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == -1);
+        continue;
+        //REQUIRE(it->second.gain == -1);
       }
     }
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 2);
+    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 0);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 2);
+    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 1);
+    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 1);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 2);
+    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 0);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 0);
+    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 2);
   }
 }
+
+
 
 // verify the update_bucket
 TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
@@ -821,185 +788,186 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
 
   SUBCASE("SUB : Move c1") { 
     int old_gain = hypergraph.map_cells["c1"].gain;
-    hypergraph.map_cells["c1"].partition = 1;
-    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n3"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n3"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n4"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n4"].cnt_cells_p1 +=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c1"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c1"]));
-    hypergraph.update_bucket(
-      old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c1"]));
+    //hypergraph.map_cells["c1"].partition = 1;
+    //hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
+    //hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
+    //hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
+    //hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
+    //hypergraph.map_nets["n3"].cnt_cells_p0 -=1;
+    //hypergraph.map_nets["n3"].cnt_cells_p1 +=1;
+    //hypergraph.map_nets["n4"].cnt_cells_p0 -=1;
+    //hypergraph.map_nets["n4"].cnt_cells_p1 +=1;
+ 
+    hypergraph.map_cells["c1"].gain *= (-1); 
+    Cell* target = &(hypergraph.map_cells["c1"]);
 
-    for (auto & c : hypergraph.map_cells["c1"].connected_cells) {
-      old_gain = c->gain;
-      hypergraph.update_gain(c);
-      hypergraph.update_bucket(old_gain+hypergraph.num_nets(), c);
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
+    hypergraph.delete_from_bucket(target);
 
     for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 3 || i == 5 || i == 6 || i > 7) {
+      if (i < 2 || i == 4 || i == 5 || i > 6) {
         REQUIRE(hypergraph.bucket[i] == nullptr);
       }
-      else if (i == 3) {
+      else if (i == 2) {
         REQUIRE(hypergraph.bucket[i]->name == "c4");
       }
-      else if (i == 4) {
+      else if (i == 3) {
         REQUIRE(hypergraph.bucket[i]->name != "c2");
         REQUIRE(hypergraph.bucket[i]->name != "c4");
+        REQUIRE(hypergraph.bucket[i]->name != "c1");
       }
-      else if (i == 7) {
+      else if (i == 6) {
         REQUIRE(hypergraph.bucket[i]->name == "c2");
       }
     }
   }
   
   SUBCASE("SUB : Move c2") { 
-    int old_gain = hypergraph.map_cells["c2"].gain;
-    hypergraph.map_cells["c2"].partition = 1;
-    hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
-    hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
-    hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c2"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c2"]));
-    hypergraph.update_bucket(
-      old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c2"]));
+    //int old_gain = hypergraph.map_cells["c2"].gain;
+    //hypergraph.map_cells["c2"].partition = 1;
+    //hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
+    //hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
+    //hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
+    //hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
+    //hypergraph.update_cut_net(&(hypergraph.map_cells["c2"]));
+    //hypergraph.update_gain(&(hypergraph.map_cells["c2"]));
+    //hypergraph.update_bucket(
+    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c2"]));
 
-    for (auto & c : hypergraph.map_cells["c2"].connected_cells) {
-      old_gain = c->gain;
-      hypergraph.update_gain(c);
-      hypergraph.update_bucket(old_gain+hypergraph.num_nets(), c);
+    hypergraph.map_cells["c2"].gain *= (-1); 
+    Cell* target = &(hypergraph.map_cells["c2"]);
+
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
+    hypergraph.delete_from_bucket(target);
 
     for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 4 || i == 7 || i == 8 || i > 9) {
+      if (i < 3 || i == 6 || i == 7 || i > 8) {
         REQUIRE(hypergraph.bucket[i] == nullptr);
       }
-      else if (i == 4) {
+      else if (i == 3) {
         REQUIRE(hypergraph.bucket[i]->name == "c3");
       }
-      else if (i == 5) {
+      else if (i == 4) {
         REQUIRE(hypergraph.bucket[i]->name == "c4");
       }
-      else if (i == 6) {
-        REQUIRE(hypergraph.bucket[i]->name != "c1");
-        REQUIRE(hypergraph.bucket[i]->name != "c3");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
+      else if (i == 5) {
+        REQUIRE(hypergraph.bucket[i]->name == "c5");
       }
-      else if (i == 9) {
+      else if (i == 8) {
         REQUIRE(hypergraph.bucket[i]->name == "c1");
       }
     }
   }
   
   SUBCASE("SUB : Move c3") { 
-    int old_gain = hypergraph.map_cells["c3"].gain;
-    hypergraph.map_cells["c3"].partition = 0;
-    hypergraph.map_nets["n2"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n2"].cnt_cells_p1 -=1;
-    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c3"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c3"]));
-    hypergraph.update_bucket(
-      old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c3"]));
+    //int old_gain = hypergraph.map_cells["c3"].gain;
+    //hypergraph.map_cells["c3"].partition = 0;
+    //hypergraph.map_nets["n2"].cnt_cells_p0 +=1;
+    //hypergraph.map_nets["n2"].cnt_cells_p1 -=1;
+    //hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
+    //hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
+    //hypergraph.update_cut_net(&(hypergraph.map_cells["c3"]));
+    //hypergraph.update_gain(&(hypergraph.map_cells["c3"]));
+    //hypergraph.update_bucket(
+    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c3"]));
 
-    for (auto & c : hypergraph.map_cells["c3"].connected_cells) {
-      old_gain = c->gain;
-      hypergraph.update_gain(c);
-      hypergraph.update_bucket(old_gain+hypergraph.num_nets(), c);
+    hypergraph.map_cells["c3"].gain *= (-1); 
+    Cell* target = &(hypergraph.map_cells["c3"]);
+
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
+    hypergraph.delete_from_bucket(target);
 
     for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 3 || i == 4 || i > 7) {
+      if (i < 2 || i == 3 || i > 6) {
         REQUIRE(hypergraph.bucket[i] == nullptr);
       }
-      else if (i == 3) {
+      else if (i == 2) {
         REQUIRE(hypergraph.bucket[i]->name == "c2");
       }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name != "c2");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-        REQUIRE(hypergraph.bucket[i]->name != "c5");
+      else if (i == 4) {
+        REQUIRE(hypergraph.bucket[i]->name == "c1");
       }
-      else if (i == 6) {
+      else if (i == 5) {
         REQUIRE(hypergraph.bucket[i]->name == "c5");
       }
-      else if (i == 7) {
+      else if (i == 6) {
         REQUIRE(hypergraph.bucket[i]->name == "c4");
       }
     }
   }
   
   SUBCASE("SUB : Move c4") { 
-    int old_gain = hypergraph.map_cells["c4"].gain;
-    hypergraph.map_cells["c4"].partition = 0;
-    hypergraph.map_nets["n3"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n3"].cnt_cells_p1 -=1;
-    hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c4"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c4"]));
-    hypergraph.update_bucket(
-      old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c4"]));
+    //int old_gain = hypergraph.map_cells["c4"].gain;
+    //hypergraph.map_cells["c4"].partition = 0;
+    //hypergraph.map_nets["n3"].cnt_cells_p0 +=1;
+    //hypergraph.map_nets["n3"].cnt_cells_p1 -=1;
+    //hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
+    //hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
+    //hypergraph.update_cut_net(&(hypergraph.map_cells["c4"]));
+    //hypergraph.update_gain(&(hypergraph.map_cells["c4"]));
+    //hypergraph.update_bucket(
+    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c4"]));
 
-    for (auto & c : hypergraph.map_cells["c4"].connected_cells) {
-      old_gain = c->gain;
-      hypergraph.update_gain(c);
-      hypergraph.update_bucket(old_gain+hypergraph.num_nets(), c);
+    hypergraph.map_cells["c4"].gain *= (-1); 
+    Cell* target = &(hypergraph.map_cells["c4"]);
+
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
+    hypergraph.delete_from_bucket(target);
+    
     for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 4 || i > 7) {
+      if (i < 3 || i == 4 || i > 7) {
         REQUIRE(hypergraph.bucket[i] == nullptr);
       }
-      else if (i == 4) {
+      else if (i == 3) {
         REQUIRE(hypergraph.bucket[i]->name != "c3");
         REQUIRE(hypergraph.bucket[i]->name != "c4");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name != "c1");
-        REQUIRE(hypergraph.bucket[i]->name != "c2");
         REQUIRE(hypergraph.bucket[i]->name != "c5");
       }
-      else if (i == 6) {
+      else if (i == 5) {
         REQUIRE(hypergraph.bucket[i]->name == "c5");
       }
-      else if (i == 7) {
+      else if (i == 6) {
         REQUIRE(hypergraph.bucket[i]->name == "c3");
       }
     }
   }
   
   SUBCASE("SUB : Move c5") { 
-    int old_gain = hypergraph.map_cells["c5"].gain;
-    hypergraph.map_cells["c5"].partition = 0;
-    hypergraph.map_nets["n4"].cnt_cells_p0 +=1;
-    hypergraph.map_nets["n4"].cnt_cells_p1 -=1;
-    hypergraph.update_cut_net(&(hypergraph.map_cells["c5"]));
-    hypergraph.update_gain(&(hypergraph.map_cells["c5"]));
-    hypergraph.update_bucket(
-      old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c5"]));
+    //int old_gain = hypergraph.map_cells["c5"].gain;
+    //hypergraph.map_cells["c5"].partition = 0;
+    //hypergraph.map_nets["n4"].cnt_cells_p0 +=1;
+    //hypergraph.map_nets["n4"].cnt_cells_p1 -=1;
+    //hypergraph.update_cut_net(&(hypergraph.map_cells["c5"]));
+    //hypergraph.update_gain(&(hypergraph.map_cells["c5"]));
+    //hypergraph.update_bucket(
+    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c5"]));
 
-    for (auto & c : hypergraph.map_cells["c5"].connected_cells) {
-      old_gain = c->gain;
-      hypergraph.update_gain(c);
-      hypergraph.update_bucket(old_gain+hypergraph.num_nets(), c);
+    hypergraph.map_cells["c5"].gain *= (-1); 
+    Cell* target = &(hypergraph.map_cells["c5"]);
+
+    for (size_t i = 0; i < target->nets.size(); ++i) { 
+      hypergraph.update_gain(target->nets[i], target);
     }
+    hypergraph.delete_from_bucket(target);
     
     for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 4 || i > 5) {
+      if (i < 3 || i > 4) {
         REQUIRE(hypergraph.bucket[i] == nullptr);
       }
-      else if (i == 4) {
+      else if (i == 3) {
         REQUIRE(hypergraph.bucket[i]->name != "c3");
         REQUIRE(hypergraph.bucket[i]->name != "c4");
+        REQUIRE(hypergraph.bucket[i]->name != "c5");
       }
-      else if (i == 5) {
+      else if (i == 4) {
         REQUIRE(hypergraph.bucket[i]->name != "c1");
         REQUIRE(hypergraph.bucket[i]->name != "c2");
         REQUIRE(hypergraph.bucket[i]->name != "c5");
@@ -1083,6 +1051,7 @@ TEST_CASE("verify_find_max_cumulative_gain" * doctest::timeout(600)) {
   }
 }
 
+/*
 // verify the recover
 TEST_CASE("verify_recover" * doctest::timeout(600)) {
   Hypergraph hypergraph(input_file, output_file);
@@ -1130,59 +1099,60 @@ TEST_CASE("verify_recover" * doctest::timeout(600)) {
     
     hypergraph.recover(&(hypergraph.map_cells["c1"]));
     
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == false);
-      }
-    }
+    //for (it1 = hypergraph.map_nets.begin();
+    //     it1 != hypergraph.map_nets.end(); ++it1) {
+    //  if (it1->second.name == "n1") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n2") {
+    //    REQUIRE(it1->second.cut == true);
+    //  }
+    //  else if (it1->second.name == "n3") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n4") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //  else if (it1->second.name == "n5") {
+    //    REQUIRE(it1->second.cut == false);
+    //  }
+    //}
   
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == 2);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == -2);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == -1);
-      }
-    }
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 3 || i == 5 || i == 6 || i > 7) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 3) {
-        REQUIRE(hypergraph.bucket[i]->name == "c4");
-      }
-      else if (i == 4) {
-        REQUIRE(hypergraph.bucket[i]->name != "c2");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-      }
-      else if (i == 7) {
-        REQUIRE(hypergraph.bucket[i]->name == "c2");
-      }
-    }
+    //for (it = hypergraph.map_cells.begin(); 
+    //     it != hypergraph.map_cells.end(); ++it) {
+    //  
+    //  if (it->second.name == "c1") {
+    //    REQUIRE(it->second.gain == -1);
+    //  }
+    //  else if (it->second.name == "c2") {
+    //    REQUIRE(it->second.gain == 2);
+    //  }
+    //  else if (it->second.name == "c3") {
+    //    REQUIRE(it->second.gain == -1);
+    //  }
+    //  else if (it->second.name == "c4") {
+    //    REQUIRE(it->second.gain == -2);
+    //  }
+    //  else if (it->second.name == "c5") {
+    //    REQUIRE(it->second.gain == -1);
+    //  }
+    //}
+    //for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
+    //  if (i < 3 || i == 5 || i == 6 || i > 7) {
+    //    REQUIRE(hypergraph.bucket[i] == nullptr);
+    //  }
+    //  else if (i == 3) {
+    //    REQUIRE(hypergraph.bucket[i]->name == "c4");
+    //  }
+    //  else if (i == 4) {
+    //    REQUIRE(hypergraph.bucket[i]->name != "c2");
+    //    REQUIRE(hypergraph.bucket[i]->name != "c4");
+    //  }
+    //  else if (i == 7) {
+    //    REQUIRE(hypergraph.bucket[i]->name == "c2");
+    //  }
+    //}
+
   }
   
   // recover c2 = move c2 to another partition
@@ -1432,3 +1402,4 @@ TEST_CASE("verify_recover" * doctest::timeout(600)) {
     }
   }
 }
+*/
