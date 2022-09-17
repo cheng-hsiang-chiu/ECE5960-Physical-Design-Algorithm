@@ -47,6 +47,7 @@ Note that the example solution may not be the optimal one.
 - paper : papers
 - CMakeLists.txt : cmake file
 - checker_linux : correctness checking
+- run.sh : a script to run the executable, measure runtime and verify the results for all benchmarks
 
 ## Build
 To build the executable, please follow the instructions below. The default compiler is clang++.
@@ -57,23 +58,35 @@ make
 ```
 
 ## Run
-To run the executable, please follow the instructions below. Change the input files and output files according to your needs.
+To run the executable, please follow the instructions below in the folder `build`.
+Change the input files and output files according to your needs.
 ```
 cd build
 ./fm ../benchmark/input_6.dat ./output_6.dat
 ```
 
 ## Unit Test
-To run the unit tests, please follow the instructions below.
+To run the unit tests, please follow the instructions below in the folder `build`,
 ```
 cd build
 make test
 ```
 
 ## Verify correctness
-To verify the correctness of the executable, please follow the instructions below. Modify the input files and output files according to your needs.
+To verify the correctness of the executable, please follow the instructions below in the folder `build`.
+Modify the input files and output files according to your needs.
 ```
 ./checker_linux ./benchmark/input_6.dat ./build/output_6.dat
+```
+
+## Run the script
+Instead of running the executable for the benchmark one by one,
+the `run.sh` is used to run the executable, measure the runtime and verify the results for all benchmarks.
+The script will be copied to the folder `build` when building the executable.
+In folder `build`, simply run the command 
+```
+chmod 744 ./run.sh
+./run.sh
 ```
 
 
