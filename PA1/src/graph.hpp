@@ -12,7 +12,6 @@
 #include <climits>
 #include <cmath>
 
-
 class Net;
 
 class Cell {
@@ -30,7 +29,6 @@ public:
 
 class Net {
 public:
-  bool cut = false;
   int cnt_cells_p0 = 0;
   int cnt_cells_p1 = 0;
   std::string name;
@@ -88,8 +86,6 @@ public:
 
   void display_partition() const;
 
-  void display_cut() const;
-  
   void display_gain() const;
 
   void display_connected_cells() const;
@@ -102,8 +98,6 @@ public:
 
   bool meet_balance_criterion(Cell*) const;
 
-  void update_cut_net(Cell*);
-  
   void update_gain(Net*, Cell*);
 
   void update_bucket(int, Cell*);
@@ -157,17 +151,12 @@ Hypergraph::Hypergraph(std::string& input_file, std::string& output_file) {
         // cell string
         else {
           cell_name = line;
-          //map_nets[net_name].cells.emplace_back(cell_name);
 
           // new cell
           if (map_cells.find(cell_name) == map_cells.end()) {
             Cell c;
             c.name = cell_name;
             c.nets.emplace_back(&(map_nets[net_name])); 
-            //c.partition = std::rand()%2;
-            //if (c.partition == 0) {
-            //  ++num_cells_p0;
-            //}
             map_cells[cell_name] = c;
           }
           else {
@@ -182,7 +171,6 @@ Hypergraph::Hypergraph(std::string& input_file, std::string& output_file) {
           }
           temp.emplace_back(&(map_cells[cell_name]));
         }
-        //std::cout << line << '\n';
       }
     }
   }
@@ -266,7 +254,6 @@ inline void Hypergraph::initialize_gain() {
         ToBlock = itr->second.nets[i]->cnt_cells_p0;
       }
 
-      //std::cout << "FromBlock = " << FromBlock << ", ToBlock = " << ToBlock << '\n';
       if (FromBlock == 1) {
         ++gain;
       }
@@ -288,15 +275,6 @@ inline void Hypergraph::display_partition() const {
               << " at partition " 
               << itr->second.partition << '\n'; 
   }  
-}
-
-inline void Hypergraph::display_cut() const {
-  std::unordered_map<std::string, Net>::const_iterator itr;
-  for (itr = map_nets.begin(); itr != map_nets.end(); ++itr) {
-    if (itr->second.cut) {
-      std::cout << itr->second.name << " is a cut\n";
-    }
-  }
 }
 
 inline void Hypergraph::display_gain() const {
@@ -327,9 +305,7 @@ inline void Hypergraph::construct_bucket() {
 
   std::unordered_map<std::string, Cell>::iterator itr;
   for (itr = map_cells.begin(); itr != map_cells.end(); ++itr) {
-    //std::cout << itr->second.name << " has gain = " << itr->second.gain << '\n';
     if (bucket[itr->second.gain+offset] == nullptr) {
-      //std::cout << "bucket[" << itr->second.gain + offset << "] is nullptr\n";
       bucket[itr->second.gain+offset] = &(itr->second);
       tail_bucket[itr->second.gain+offset] = &(itr->second);
     }
@@ -360,7 +336,6 @@ inline bool Hypergraph::meet_balance_criterion(Cell* candidate) const {
   if (candidate->partition == 0) {
     if (area_lower_bound < (num_cells_p0-1) &&
         area_upper_bound > (num_cells_p0-1)) {
-      //std::cout << "true\n";
       return true;
     }
     return false;
@@ -368,7 +343,6 @@ inline bool Hypergraph::meet_balance_criterion(Cell* candidate) const {
   else {
     if (area_lower_bound < (num_cells_p0+1) &&
         area_upper_bound > (num_cells_p0+1)) {
-      //std::cout << "true\n";
       return true;
     }
     return false;
@@ -381,7 +355,6 @@ inline void Hypergraph::run_fm() {
     std::cout << "  Running pass " << pass++;
     one_pass();
 
-    //std::cout << "next_pass = " << next_pass << '\n';
     // prepare for the next pass
     if (next_pass) {
       // reset the cell state except the partition
@@ -405,25 +378,6 @@ inline void Hypergraph::run_fm() {
     else {
       break;
     }
-  }
-}
-
-inline void Hypergraph::update_cut_net(Cell* target) {
-  for (size_t i = 0; i < target->nets.size(); ++i) {
-    if (target->nets[i]->cnt_cells_p0 != 0 && 
-        target->nets[i]->cnt_cells_p1 != 0) {
-      target->nets[i]->cut = true;
-    }
-    else {
-      target->nets[i]->cut = false;
-    }
-    //target->nets[i]->cut = false;
-    //for (size_t j = 0; j < target->nets[i]->cells.size(); ++j) {
-    //  if (target->partition != target->nets[i]->cells[j]->partition) {
-    //    target->nets[i]->cut = true;
-    //    break;   
-    //  }
-    //}
   }
 }
 
@@ -471,40 +425,27 @@ inline void Hypergraph::update_gain(Net* net, Cell* base) {
     ++(net->cnt_cells_p0); 
     --(net->cnt_cells_p1); 
   }
-  //std::cout << "net.name = " << net->name << " From = " << FromBlock <<", To = " << ToBlock << '\n';  
   if (ToBlock == 0) {
-    //std::cout << "ToBlock = 0 \n";
     for (size_t i = 0; i < net->cells.size(); ++i) {
       if (net->cells[i] == base) {
-        //std::cout << "ToBlock = 0, net->cells[" << i << "] = base\n";
-        //std::cout << "it is base pointer\n";
         continue;
       }
       if (!net->cells[i]->locked) {
-        //std::cout << "it is not base pointer\n";
-        //std::cout << "ToBlock = 0, ++cell " << net->cells[i]->name << '\n';
         temp = net->cells[i]->gain;
         ++(net->cells[i]->gain);
-        //std::cout << "index = " << temp+max_edge << "\n";
         update_bucket(temp, net->cells[i]);
       }
     } 
   }
   else if (ToBlock == 1) {
-    //std::cout << "ToBlock = 1 \n";
     for (size_t i = 0; i < net->cells.size(); ++i) {
       if (net->cells[i] == base) {
-        //std::cout << "it is base pointer\n";
         continue;
       }
       if (!net->cells[i]->locked && 
           net->cells[i]->partition == !(base->partition)) {
-        //std::cout << "ToBlock=1, --cell " << net->cells[i]->name << '\n';
-        //std::cout << "it is not base pointer\n";
         temp = net->cells[i]->gain;
         --(net->cells[i]->gain);
-        //std::cout << "index = " << temp+max_edge << "\n";
-        //std::cout << "before update bucket\n";
         update_bucket(temp, net->cells[i]);
       }
     }
@@ -512,37 +453,26 @@ inline void Hypergraph::update_gain(Net* net, Cell* base) {
   
   --FromBlock;
   ++ToBlock;
-  //std::cout << "again here\n";
   if (FromBlock == 0) {
-    //std::cout << "FromBlock = 0 \n";
     for (size_t i = 0; i < net->cells.size(); ++i) {
       if (net->cells[i] == base) {
-        //std::cout << "it is base pointer\n";
         continue;
       }
       if (!net->cells[i]->locked) {
-        //std::cout << "it is not base pointer\n";
-        //std::cout << "FromBlock = 0, --cell " << net->cells[i]->name << '\n';
         temp = net->cells[i]->gain;
         --(net->cells[i]->gain);
-        //std::cout << "index = " << temp+max_edge << "\n";
         update_bucket(temp, net->cells[i]);
       }
     }
   }
   else if (FromBlock == 1) {
-    //std::cout << "FromBlock = 1 \n";
     for (size_t i = 0; i < net->cells.size(); ++i) {
       if (net->cells[i] == base) {
-        //std::cout << "it is base pointer\n";
         continue;
       }
       if (!net->cells[i]->locked &&
           net->cells[i]->partition == base->partition) {
-        //std::cout << "it is not base pointer\n";
-        //std::cout << "FromBlock = 1, ++cell " << net->cells[i]->name << '\n';
         temp = net->cells[i]->gain;
-        //std::cout << "index = " << temp+max_edge << "\n";
         ++(net->cells[i]->gain);
         update_bucket(temp, net->cells[i]);
       }
@@ -584,14 +514,11 @@ inline void Hypergraph::delete_from_bucket(Cell* target) {
 inline void Hypergraph::initialize_count_cells() {
   std::unordered_map<std::string, Cell>::iterator itr;
   for (itr = map_cells.begin(); itr != map_cells.end(); ++itr) {
-    //std::cout << "cell " << itr->second.name << '\n';
     for (size_t i = 0; i < itr->second.nets.size(); ++i) {
       if (itr->second.partition == 0) {
-        //std::cout << "partition = 0, add 1 to " << itr->second.nets[i]->name << '\n';
         itr->second.nets[i]->cnt_cells_p0 += 1;
       }
       else {
-        //std::cout << "partition = 1, add 1 to " << itr->second.nets[i]->name << '\n';
         itr->second.nets[i]->cnt_cells_p1 += 1;
       }
     }
@@ -627,11 +554,6 @@ inline void Hypergraph::initialize_partition() {
     }
   }
   initialize_count_cells();
-
-  std::unordered_map<std::string, Cell>::iterator itr0;
-  for (itr0 = map_cells.begin(); itr0 != map_cells.end(); ++itr0) {
-    update_cut_net(&(itr0->second));
-  }
 }
 
 // update the target in the bucket
@@ -672,13 +594,6 @@ inline void Hypergraph::update_bucket(int old_gain, Cell* target) {
     tail_bucket[new_index] = target;
   }
   else {
-    //Cell* head = bucket[new_index];
-    //while (head->next) {
-    //  head = head->next;
-    //}
-    //head->next = target;
-    //target->next = nullptr;
-    //target->prev = head;
     tail_bucket[new_index]->next = target;
     target->next = nullptr;
     target->prev = tail_bucket[new_index];
@@ -692,13 +607,11 @@ inline size_t Hypergraph::find_max_cumulative_gain() {
   int max_gain = prefix_gain;
   for (size_t i = 1; i < locked_cells_gain.size(); ++i) {
     prefix_gain += locked_cells_gain[i];
-    //std::cout << "prefix sum = " << prefix_gain << '\n';
     if (prefix_gain >= max_gain && locked_cells_gain[i] != 0) {
       max_gain = prefix_gain;
       idx = i;
     }
   }
-  //std::cout << "max_gain = " << max_gain << ", prefix_gain = " << prefix_gain << 'n';
   std::cout << " gets " << max_gain << " gains improvement\n";
   if (max_gain <= 0) {
     next_pass = false;
@@ -724,8 +637,6 @@ inline void Hypergraph::output_answer() {
     std::cerr << "File could not be opened.\n";
     exit(1);
   }
-  
-  //display_count_cells();
  
   size_t cutsize = 0;
   std::unordered_map<std::string, Net>::iterator itr;
@@ -765,14 +676,12 @@ inline void Hypergraph::display_count_cells() const {
 }
 
 inline void Hypergraph::one_pass() {
-  //std::cout << "max_edge = " << max_edge << '\n';
   locked_cells.resize(num_cells());
   locked_cells_gain.resize(num_cells());
   size_t cnt = 0;
   int index = bucket.size()-1;
 
   while (cnt < num_cells()) {
-    //std::cout << "cnt = " << cnt << '\n';  
     Cell* head = bucket[index];
 
     while (head == nullptr) {
@@ -788,11 +697,8 @@ inline void Hypergraph::one_pass() {
     if (index == 0 && head == nullptr) {
       break; 
     }
-    //std::cout << "index = " << index << '\n';
     while (head) {
-      //std::cout << "head has name = " << head->name << '\n';
       if (!head->locked && meet_balance_criterion(head)) {
-        //std::cout << "move cell " << head->name << '\n';
         if (head->partition == 0) {
           --num_cells_p0;
         }
@@ -802,13 +708,9 @@ inline void Hypergraph::one_pass() {
         
         for (size_t i = 0; i < head->nets.size(); ++i) {
           update_gain(head->nets[i], head);
-          //std::cout << "i = " << i << " update gain\n";
-          //display_count_cells();
         }
-        //std::cout << "hear\n";
         head->partition = !(head->partition);
         
-        update_cut_net(head);
         head->gain = -1 * head->gain;
         delete_from_bucket(head);
 
@@ -829,19 +731,14 @@ inline void Hypergraph::one_pass() {
       --index;
     }
   }
-  //display_locked_cells();
   
   size_t idx = find_max_cumulative_gain();
-  //std::cout << "idx = " << idx << '\n';
   if (idx != num_cells() - 1) {
     for (size_t i = locked_cells.size()-1; i > idx; --i) {
       if (locked_cells[i] == nullptr) {
         continue;
       }
-      //std::cout << "recover cell = " << locked_cells[i]->name << '\n';
       recover(locked_cells[i]);
-      update_cut_net(locked_cells[i]);
     }
   }
-
 }

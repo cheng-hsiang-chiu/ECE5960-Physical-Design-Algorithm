@@ -41,7 +41,7 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
@@ -122,7 +122,7 @@ TEST_CASE("verify_initial_count_cells_each_partition" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
@@ -191,7 +191,7 @@ TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
@@ -274,7 +274,7 @@ TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
@@ -374,7 +374,7 @@ TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
@@ -437,7 +437,7 @@ TEST_CASE("verify_update_gain_move_c1" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
@@ -773,7 +773,7 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
@@ -1005,7 +1005,7 @@ TEST_CASE("verify_find_max_cumulative_gain" * doctest::timeout(600)) {
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
+    //it1->second.cut = false;
     it1->second.cnt_cells_p0 = 0;
     it1->second.cnt_cells_p1 = 0;
   }
