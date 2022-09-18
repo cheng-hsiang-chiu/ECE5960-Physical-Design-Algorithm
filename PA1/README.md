@@ -60,7 +60,7 @@ make
 ```
 
 ## Run
-To run the executable, please follow the instructions below in the folder `build`.
+To run the executable, please follow the instructions below.
 Change the input files and output files according to your needs.
 ```
 cd build
@@ -68,16 +68,17 @@ cd build
 ```
 
 ## Unit Test
-To run the unit tests, please follow the instructions below in the folder `build`,
+To run the unit tests, please follow the instructions below.
 ```
 cd build
 make test
 ```
 
 ## Verify correctness
-To verify the correctness of the executable, please follow the instructions below in the folder `build`.
+To verify the correctness of the executable, please follow the instructions below.
 Modify the input files and output files according to your needs.
 ```
+cd build
 ../checker_linux ../benchmark/input_6.dat ./build/output_6.dat
 ```
 
@@ -85,8 +86,8 @@ Modify the input files and output files according to your needs.
 Instead of running the executable for the benchmark one by one,
 the `run.sh` is used to run the executable, measure the runtime and verify the results for all benchmarks.
 The script will be copied to the folder `build` when building the executable.
-In folder `build`, simply run the command 
 ```
+cd build
 chmod 744 ./run.sh
 ./run.sh
 ```
