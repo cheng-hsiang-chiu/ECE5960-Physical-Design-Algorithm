@@ -38,6 +38,8 @@ public:
 
 class Hypergraph {
 public:
+  Hypergraph() = default;
+
   Hypergraph(std::string&, std::string&);
 
   std::string output_path;

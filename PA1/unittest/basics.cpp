@@ -7,15 +7,74 @@
 #include <unordered_map>
 #include "graph.hpp"
 
-std::string input_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/unittest/test.dat");
+//std::string input_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/unittest/test.dat");
 
-std::string output_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/build/out.dat");
+//std::string output_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/build/out.dat");
+
+
+class HypergraphTest : public Hypergraph {
+public:
+  HypergraphTest() {
+    Net net1;
+    Net net2;
+    Net net3;
+    Net net4;
+    Net net5;
+    (&net1)->name = "n1";
+    (&net2)->name = "n2";
+    (&net3)->name = "n3";
+    (&net4)->name = "n4";
+    (&net5)->name = "n5";
+    map_nets["n1"] = net1;
+    map_nets["n2"] = net2; 
+    map_nets["n3"] = net3;
+    map_nets["n4"] = net4; 
+    map_nets["n5"] = net5;
+    
+    Cell  cell1;
+    Cell  cell2;
+    Cell  cell3;
+    Cell  cell4;
+    Cell  cell5;
+    (&cell1)->name = "c1";
+    (&cell2)->name = "c2";
+    (&cell3)->name = "c3";
+    (&cell4)->name = "c4";
+    (&cell5)->name = "c5";
+    map_cells["c1"] = cell1;
+    map_cells["c2"] = cell2;
+    map_cells["c3"] = cell3;
+    map_cells["c4"] = cell4;
+    map_cells["c5"] = cell5;
+
+    map_nets["n1"].cells = std::vector{&map_cells["c1"], &map_cells["c2"]};
+    map_nets["n2"].cells = std::vector{&map_cells["c1"], &map_cells["c2"], &map_cells["c3"]};
+    map_nets["n3"].cells = std::vector{&map_cells["c1"], &map_cells["c4"]};
+    map_nets["n4"].cells = std::vector{&map_cells["c1"], &map_cells["c5"]};
+    map_nets["n5"].cells = std::vector{&map_cells["c3"], &map_cells["c4"]};
+    
+    map_cells["c1"].connected_cells = std::set{&map_cells["c2"], &map_cells["c3"], &map_cells["c4"], &map_cells["c5"]};
+    map_cells["c2"].connected_cells = std::set{&map_cells["c1"], &map_cells["c3"]};
+    map_cells["c3"].connected_cells = std::set{&map_cells["c1"], &map_cells["c2"], &map_cells["c4"]};
+    map_cells["c4"].connected_cells = std::set{&map_cells["c1"], &map_cells["c3"]};
+    map_cells["c5"].connected_cells = std::set{&map_cells["c1"]};
+    map_cells["c1"].nets = std::vector{&map_nets["n1"], &map_nets["n2"], &map_nets["n3"], &map_nets["n4"]};
+    map_cells["c2"].nets = std::vector{&map_nets["n1"], &map_nets["n2"]};
+    map_cells["c3"].nets = std::vector{&map_nets["n2"], &map_nets["n5"]};
+    map_cells["c4"].nets = std::vector{&map_nets["n3"], &map_nets["n5"]};
+    map_cells["c5"].nets = std::vector{&map_nets["n4"]};
+  }
+};
+
+
 
 // verify the initial gain
 TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
   std::srand(std::time(nullptr));
+
+  HypergraphTest hypergraph;
  
-  Hypergraph hypergraph(input_file, output_file);
+  //Hypergraph hypergraph(input_file, output_file);
   //hypergraph.traverse();
 
   std::unordered_map<std::string, Cell>::iterator it;
@@ -37,7 +96,7 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
       it->second.partition = 1;
     }
   }
-  
+ 
   std::unordered_map<std::string, Net>::iterator it1;
   for (it1 = hypergraph.map_nets.begin(); 
        it1 != hypergraph.map_nets.end(); ++it1) {
@@ -59,7 +118,7 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
   //
   //hypergraph.display_gain();
 
-  //for (it1 = hypergraph.map_nets.begin(); 
+  //for (it1 = hypergraph.map_nets.begin();
   //     it1 != hypergraph.map_nets.end(); ++it1) {
   //  if (it1->second.name == "n2" || 
   //      it1->second.name == "n3" ||
@@ -97,7 +156,8 @@ TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
 // verify the initial count of cells in each partition
 TEST_CASE("verify_initial_count_cells_each_partition" * doctest::timeout(600)) {
   
-  Hypergraph hypergraph(input_file, output_file);
+  //Hypergraph hypergraph(input_file, output_file);
+  HypergraphTest hypergraph;
 
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -166,7 +226,8 @@ TEST_CASE("verify_initial_count_cells_each_partition" * doctest::timeout(600)) {
 // verify the initial connected cells 
 TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
   
-  Hypergraph hypergraph(input_file, output_file);
+  //Hypergraph hypergraph(input_file, output_file);
+  HypergraphTest hypergraph;
 
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -247,7 +308,8 @@ TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
 // verify the initial bucket
 TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
   
-  Hypergraph hypergraph(input_file, output_file);
+  //Hypergraph hypergraph(input_file, output_file);
+  HypergraphTest hypergraph;
   
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -283,11 +345,12 @@ TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
   hypergraph.min_gain = 1000000;
 
   hypergraph.num_cells_p0 = 2;
+  hypergraph.max_edge = 4;
   hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
 
   hypergraph.bucket.clear();
-  
+   
   hypergraph.construct_bucket();
   
   REQUIRE(hypergraph.bucket.size() == hypergraph.max_edge*2+1);
@@ -347,7 +410,9 @@ TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
 
 // verify the balance_criterion
 TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
-  Hypergraph hypergraph(input_file, output_file);
+  
+  //Hypergraph hypergraph(input_file, output_file);
+  HypergraphTest hypergraph;
   
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -382,6 +447,9 @@ TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
   hypergraph.num_cells_p0 = 2;
+  hypergraph.max_edge = 4;
+  hypergraph.area_lower_bound = 1.25;
+  hypergraph.area_upper_bound = 3.75;
   hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
    
@@ -409,8 +477,10 @@ TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
 
 
 // verify the update_gain of c1 moved
-TEST_CASE("verify_update_gain_move_c1" * doctest::timeout(600)) {
-  Hypergraph hypergraph(input_file, output_file);
+TEST_CASE("verify_update_gain" * doctest::timeout(600)) {
+  
+  //Hypergraph hypergraph(input_file, output_file);
+  HypergraphTest hypergraph;
   
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -445,6 +515,7 @@ TEST_CASE("verify_update_gain_move_c1" * doctest::timeout(600)) {
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
   hypergraph.num_cells_p0 = 2;
+  hypergraph.max_edge = 4;
   hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   hypergraph.bucket.clear();
@@ -746,7 +817,9 @@ TEST_CASE("verify_update_gain_move_c1" * doctest::timeout(600)) {
 
 // verify the update_bucket
 TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
-  Hypergraph hypergraph(input_file, output_file);
+  
+  //Hypergraph hypergraph(input_file, output_file);
+  HypergraphTest hypergraph;
   
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -781,6 +854,7 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
   hypergraph.num_cells_p0 = 2;
+  hypergraph.max_edge = 4;
   hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   hypergraph.bucket.clear();
@@ -978,7 +1052,9 @@ TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
 
 // verify the find_max_cumulative_gain
 TEST_CASE("verify_find_max_cumulative_gain" * doctest::timeout(600)) {
-  Hypergraph hypergraph(input_file, output_file);
+  
+  //Hypergraph hypergraph(input_file, output_file);
+  HypergraphTest hypergraph;
   
   std::unordered_map<std::string, Cell>::iterator it;
   for (it = hypergraph.map_cells.begin(); 
@@ -1013,6 +1089,7 @@ TEST_CASE("verify_find_max_cumulative_gain" * doctest::timeout(600)) {
   hypergraph.max_gain = -1000000;
   hypergraph.min_gain = 1000000;
   hypergraph.num_cells_p0 = 2;
+  hypergraph.max_edge = 4;
   hypergraph.initialize_count_cells();
   hypergraph.initialize_gain(); 
   hypergraph.bucket.clear();

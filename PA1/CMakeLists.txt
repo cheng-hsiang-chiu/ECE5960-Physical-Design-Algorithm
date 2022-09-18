@@ -28,3 +28,8 @@ add_custom_command(
           ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
           ${CMAKE_CURRENT_SOURCE_DIR}/build/run.sh)
 
+#add_custom_command(
+#  TARGET ${PROJECT_NAME} POST_BUILD
+#  COMMAND ${CMAKE_COMMAND} -E copy
+#          ${CMAKE_CURRENT_SOURCE_DIR}/unittest/test.dat
+#          ${CMAKE_CURRENT_SOURCE_DIR}/build/test.dat)
