@@ -54,6 +54,7 @@ To build the executable, please follow the instructions below. The default compi
 ```
 mkdir build
 cd build
+cmake ../
 make
 ```
 
