@@ -48,6 +48,7 @@ Note that the example solution may not be the optimal one.
 - CMakeLists.txt : cmake file
 - checker_linux : correctness checking
 - run.sh : a script to run the executable, measure runtime and verify the results for all benchmarks
+- PA1-report.pdf : a report
 
 ## Build
 To build the executable, please follow the instructions below. The default compiler is clang++.
@@ -77,7 +78,7 @@ make test
 To verify the correctness of the executable, please follow the instructions below in the folder `build`.
 Modify the input files and output files according to your needs.
 ```
-./checker_linux ./benchmark/input_6.dat ./build/output_6.dat
+../checker_linux ../benchmark/input_6.dat ./build/output_6.dat
 ```
 
 ## Run the script
