@@ -11,6 +11,6 @@ jobs:
     - name: build
       run: cd PA1 ; mkdir build ; cd build ; cmake ../ ; make 
     - name: test benchmarks
-      run: cd build ; ./run.sh
+      run: cd PA1/build ; ./run.sh
     - name: test unittest
-      run: cd build ;  make test
+      run: cd PA1/build ;  make test
