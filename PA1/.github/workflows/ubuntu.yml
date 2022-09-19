@@ -8,7 +8,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: build
+      run: mkdir build ; cd build ; cmake ../ ; make 
     - name: test benchmarks
-      run: mkdir build; cd build; cmake ../; make; ./run.sh
+      run: cd build ; ./run.sh
     - name: test unittest
-      run: mkdir build; cd build; cmake ../; make; make test
+      run: cd build ;  make test
