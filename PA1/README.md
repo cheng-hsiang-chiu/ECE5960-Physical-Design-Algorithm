@@ -1,3 +1,5 @@
+[![Ubuntu](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/workflows/Ubuntu/badge.svg)](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/actions?query=workflow%3AUbuntu)
+
 # Fiduccia–Mattheyses (FM) Partition Algorithm
 
 
