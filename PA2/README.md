@@ -3,10 +3,10 @@
 
 ## What is this about?
 This is a program assianment of ECE5960-Physical-Design-Algorithm.
-The purpose of this assignment is to implement fixed-outline floorplanning
+The purpose of this assignment is to implement fixed-outline floorplanning using [Sequence-Pair Algorithm]()
 and vefity the correctness using eight benchmarks.
 Refer to [Problem Statement](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA2/README.md#problem-statement),
-[Input Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA1/README.md#input-format) and [Output Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA1/README.md#output-format)
+[Input Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA2/README.md#input-format) and [Output Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA2/README.md#output-format)
 for more information.
 
 ## Problem Statement
@@ -175,3 +175,4 @@ chmod 744 ./run.sh
 
 
 ## Reference
+- Hiroshi Murata, Kunihiro Fujiyoshi, Shigetoshi Nakatake, Yoji Kajitani, "VLSI Module Placement Based on Rectangle-Packing by the Sequence-Pair," in "*IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*," 1996 [[link](./paper/VLSI_Module_Placement_Based_on_Rectangle-Packing_by_the_Sequence-Pair.pdf)]
