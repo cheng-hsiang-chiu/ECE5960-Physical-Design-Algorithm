@@ -3,7 +3,7 @@
 
 ## What is this about?
 This is a program assianment of ECE5960-Physical-Design-Algorithm.
-The purpose of this assignment is to implement fixed-outline floorplanning using [Sequence-Pair Algorithm]()
+The purpose of this assignment is to implement fixed-outline floorplanning using [Sequence-Pair Algorithm](./paper/VLSI_Module_Placement_Based_on_Rectangle-Packing_by_the_Sequence-Pair.pdf)
 and vefity the correctness using eight benchmarks.
 Refer to [Problem Statement](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA2/README.md#problem-statement),
 [Input Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA2/README.md#input-format) and [Output Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA2/README.md#output-format)
