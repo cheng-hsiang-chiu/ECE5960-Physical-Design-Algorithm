@@ -123,14 +123,14 @@ D 60 0 100 50
 
 ## Repository structure
 - src : source code
-- benchmark : eight benchmarks
+- benchmarks : eight benchmarks
 - unittest : unit test
 - 3rd-party : third party library for unit test usage only
 - paper : papers
 - CMakeLists.txt : cmake file
-- checker_linux : correctness checking
+- checker.py : correctness checking
 - run.sh : a script to run the executable, measure runtime and verify the results for all benchmarks
-- PA1-report.pdf : a report
+- PA2-report.pdf : a report
 - images : an illustration
 
 ## Build
