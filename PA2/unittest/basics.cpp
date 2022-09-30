@@ -160,25 +160,68 @@ TEST_CASE("verify_initialize_sequence" * doctest::timeout(600)) {
 
 
 // verify move1
-TEST_CASE("verify_move1" * doctest_timeout(600)) {
+TEST_CASE("verify_move1" * doctest::timeout(600)) {
   SPTest sptest;
   sptest.initialize_sequence();
 
  
   SUBCASE("SUB : positive sequence only") {
   
-  std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
-  std::vector<Block*> old_negative_sequence = sptest.negative_sequence;
+    std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+    std::vector<Block*> old_negative_sequence = sptest.negative_sequence;
 
-  sptest.move1(0);
+    sptest.move1(Sequence::POS);
 
-  size_t changes = 0;
-  for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
-    if (sptest.positive_sequence[i] == old_positive_sequence[i]) {
-      continue;
+    size_t changes = 0;
+    for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
+      if (sptest.positive_sequence[i] == old_positive_sequence[i]) {
+        continue;
+      }
+      else {
+        auto found = std::find(
+          old_positive_sequence.begin(), 
+          old_positive_sequence.end(), 
+          sptest.positive_sequence[i]);
+        REQUIRE(found != old_positive_sequence.end());
+        REQUIRE(sptest.positive_sequence[i]->name == (*found)->name);
+        ++changes;
+      }
+    }
+    REQUIRE(changes == 2);
+
+    for (size_t i = 0; i < sptest.negative_sequence.size(); ++i) {
+      REQUIRE(old_negative_sequence[i] == sptest.negative_sequence[i]);
     }
   }
+  
+  SUBCASE("SUB : negative sequence only") {
+  
+    std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+    std::vector<Block*> old_negative_sequence = sptest.negative_sequence;
 
+    sptest.move1(Sequence::NEG);
+
+    size_t changes = 0;
+    for (size_t i = 0; i < sptest.negative_sequence.size(); ++i) {
+      if (sptest.negative_sequence[i] == old_negative_sequence[i]) {
+        continue;
+      }
+      else {
+        auto found = std::find(
+          old_negative_sequence.begin(), 
+          old_negative_sequence.end(), 
+          sptest.negative_sequence[i]);
+        REQUIRE(found != old_negative_sequence.end());
+        REQUIRE(sptest.negative_sequence[i]->name == (*found)->name);
+        ++changes;
+      }
+    }
+    REQUIRE(changes == 2);
+
+    for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
+      REQUIRE(old_positive_sequence[i] == sptest.positive_sequence[i]);
+    }
+  }
 }
 
 
