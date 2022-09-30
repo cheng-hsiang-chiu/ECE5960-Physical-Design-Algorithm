@@ -6,8 +6,13 @@
 #include <regex>
 #include <unordered_map>
 #include <cassert>
+#include <cstdlib>
+#include <ctime>
 
-namespace sp {
+
+
+
+namespace fp {
 
 
 
@@ -35,6 +40,11 @@ public:
 };
 
 
+enum Sequence {
+  POS = 0,
+  NEG,
+  BOTH
+};
 
 
 class SP {
@@ -42,6 +52,9 @@ public:
   std::unordered_map<std::string, Block> map_blocks;
   std::unordered_map<std::string, Terminal> map_terminals;
   std::vector<Net> vec_nets;
+
+  std::vector<Block*> positive_sequence;
+  std::vector<Block*> negative_sequence;
 
   size_t outline_width;
   size_t outline_height;
@@ -56,12 +69,20 @@ public:
 
   void dump(std::ostream&) const;
 
+  void initialize_sequence();
+
+  void move1(const Sequence);
+
+  void move2();
 };
 
 
-
 inline SP::SP(double a, const std::string& input_block_path, 
-              const std::string& input_net_path, const std::string& output_path) {
+              const std::string& input_net_path,
+              const std::string& output_path) {
+  
+  std::srand(std::time(nullptr)); 
+  
   alpha = a;
    
   std::ifstream inBlkFile(input_block_path, std::ios::in);
@@ -156,19 +177,84 @@ inline SP::SP(double a, const std::string& input_block_path,
       else {
         var = &(map_terminals[*it]);
       }
-
       n.net.emplace_back(var);
     }
-
     vec_nets.emplace_back(n);
-
   }
 
+  initialize_sequence();
 
   dump(std::cout);
 }
 
 
+// initialize positive and negative sequences
+inline void SP::initialize_sequence() {
+  positive_sequence.resize(num_blocks); 
+  negative_sequence.resize(num_blocks);
+  
+  size_t idx = std::rand()%num_blocks; 
+  for (auto& [key, value] : map_blocks) {
+    while (positive_sequence[idx] != nullptr) {
+      idx = std::rand()%num_blocks;
+    }
+    positive_sequence[idx] = &(map_blocks[key]);
+
+
+    idx = std::rand()%num_blocks;
+    while (negative_sequence[idx] != nullptr) {
+      idx = std::rand()%num_blocks;
+    }
+    negative_sequence[idx] = &(map_blocks[key]);
+  }
+}
+
+
+// move 1 : swap a random pair of blocks in the positive sequence or negative sequence or both
+inline void SP::move1(const Sequence sequence) {
+  size_t id1 = std::rand()%num_blocks;
+  size_t id2 = std::rand()%num_blocks;
+
+  while (id1 == id2) {
+    id2 = std::rand()%num_blocks;
+  }
+
+  switch (sequence) {
+    case Sequence::POS:
+      std::swap(positive_sequence[id1], positive_sequence[id2]);
+    break;
+
+    case Sequence::NEG:
+      std::swap(negative_sequence[id1], negative_sequence[id2]);
+    break;
+
+    case Sequence::BOTH:
+      std::swap(positive_sequence[id1], positive_sequence[id2]);
+      std::swap(negative_sequence[id1], negative_sequence[id2]);
+    break;
+  }
+}
+
+
+// move 2 : rotate a randomly selected block
+inline void SP::move2() {
+  size_t id = std::rand()%num_blocks;
+
+  switch(std::rand()%2) {
+    case 0:
+      std::swap(positive_sequence[id]->width, 
+                positive_sequence[id]->height);
+    break;
+
+    case 1:
+      std::swap(negative_sequence[id]->width, 
+                negative_sequence[id]->height);
+    break;
+  }
+}
+
+
+// dump SP data structure
 inline void SP::dump(std::ostream& os) const {
   os << "outline width = " << outline_width 
      << ", outline height = " << outline_height
@@ -207,6 +293,18 @@ inline void SP::dump(std::ostream& os) const {
     }
     os << '\n';
   }
+
+  os << "Positive sequence : ";
+  for (auto& ps : positive_sequence) {
+    os << ps->name << ' '; 
+  }
+  os << '\n';
+  
+  os << "Negative sequence : ";
+  for (auto& ns : negative_sequence) {
+    os << ns->name << ' '; 
+  }
+  os << '\n';
 }
 
 
@@ -219,4 +317,4 @@ inline void SP::dump(std::ostream& os) const {
 
 
 
-} // end of namespace sp
+} // end of namespace fp

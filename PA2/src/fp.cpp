@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
   std::string input_net_path(argv[3]);
   std::string output_path(argv[4]);
 
-  sp::SP sp(alpha, input_block_path, input_net_path, output_path);
+  fp::SP sp(alpha, input_block_path, input_net_path, output_path);
 
   return 0;
 }

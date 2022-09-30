@@ -5,66 +5,195 @@
 #include <doctest.h>
 #include <string>
 #include <unordered_map>
-//#include "graph.hpp"
+#include <variant>
+#include <list>
+#include <iterator>
+#include "sp.hpp"
 
-//std::string input_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/unittest/test.dat");
-
-//std::string output_file("/home/chchiu/Documents/courses/ece5960/ECE5960-Physical-Design-Algorithm/PA1/build/out.dat");
 
 /*
-class HypergraphTest : public Hypergraph {
-public:
-  HypergraphTest() {
-    Net net1;
-    Net net2;
-    Net net3;
-    Net net4;
-    Net net5;
-    (&net1)->name = "n1";
-    (&net2)->name = "n2";
-    (&net3)->name = "n3";
-    (&net4)->name = "n4";
-    (&net5)->name = "n5";
-    map_nets["n1"] = net1;
-    map_nets["n2"] = net2; 
-    map_nets["n3"] = net3;
-    map_nets["n4"] = net4; 
-    map_nets["n5"] = net5;
-    
-    Cell  cell1;
-    Cell  cell2;
-    Cell  cell3;
-    Cell  cell4;
-    Cell  cell5;
-    (&cell1)->name = "c1";
-    (&cell2)->name = "c2";
-    (&cell3)->name = "c3";
-    (&cell4)->name = "c4";
-    (&cell5)->name = "c5";
-    map_cells["c1"] = cell1;
-    map_cells["c2"] = cell2;
-    map_cells["c3"] = cell3;
-    map_cells["c4"] = cell4;
-    map_cells["c5"] = cell5;
+ *
+ * Blocks of benchmarks/1.block 
+ *   Outline: 600 1200 
+ *   NumBlocks: 5                                                                   
+ *   NumTerminals: 3
+ *   bk1 200  200
+ *   bk2 600  600
+ *   bk3 400  200
+ *   bk4 400  400
+ *   bk5 200  400
+ *   VSS terminal 1281 1463 
+ *   VDD terminal 1687 0    
+ *   P9 terminal 266 0       
+ *
+ * Nets of benchmarks/1.net
+ *   NumNets: 1
+ *   NetDegree: 4
+ *   bk1
+ *   bk2
+ *   bk3
+ *   bk4
+ *
+ */
 
-    map_nets["n1"].cells = std::vector{&map_cells["c1"], &map_cells["c2"]};
-    map_nets["n2"].cells = std::vector{&map_cells["c1"], &map_cells["c2"], &map_cells["c3"]};
-    map_nets["n3"].cells = std::vector{&map_cells["c1"], &map_cells["c4"]};
-    map_nets["n4"].cells = std::vector{&map_cells["c1"], &map_cells["c5"]};
-    map_nets["n5"].cells = std::vector{&map_cells["c3"], &map_cells["c4"]};
+namespace fp {
+
+
+
+class SPTest : public SP {
+public:
+  SPTest() {
+    Block b1;
+    Block b2;
+    Block b3;
+    Block b4;
+    Block b5;
     
-    map_cells["c1"].connected_cells = std::set{&map_cells["c2"], &map_cells["c3"], &map_cells["c4"], &map_cells["c5"]};
-    map_cells["c2"].connected_cells = std::set{&map_cells["c1"], &map_cells["c3"]};
-    map_cells["c3"].connected_cells = std::set{&map_cells["c1"], &map_cells["c2"], &map_cells["c4"]};
-    map_cells["c4"].connected_cells = std::set{&map_cells["c1"], &map_cells["c3"]};
-    map_cells["c5"].connected_cells = std::set{&map_cells["c1"]};
-    map_cells["c1"].nets = std::vector{&map_nets["n1"], &map_nets["n2"], &map_nets["n3"], &map_nets["n4"]};
-    map_cells["c2"].nets = std::vector{&map_nets["n1"], &map_nets["n2"]};
-    map_cells["c3"].nets = std::vector{&map_nets["n2"], &map_nets["n5"]};
-    map_cells["c4"].nets = std::vector{&map_nets["n3"], &map_nets["n5"]};
-    map_cells["c5"].nets = std::vector{&map_nets["n4"]};
+    Terminal t1;
+    Terminal t2;
+    Terminal t3;
+    
+    Net n;
+    
+    b1.name = "bk1";
+    b2.name = "bk2";
+    b3.name = "bk3";
+    b4.name = "bk4";
+    b5.name = "bk5";
+    b1.width  = 200;
+    b1.height = 200;    
+    b2.width  = 600;
+    b2.height = 600;    
+    b3.width  = 400;
+    b3.height = 200;    
+    b4.width  = 400;
+    b4.height = 400;
+    b5.width  = 200;
+    b5.height = 400;
+   
+    t1.name = "VSS";
+    t2.name = "VDD";
+    t3.name = "P9";
+    t1.pos_x = 1281;
+    t1.pos_y = 1463;
+    t2.pos_x = 1687;
+    t2.pos_y = 0;
+    t3.pos_x = 266;
+    t3.pos_y = 0;
+   
+    num_blocks = 5;
+    num_terminals = 3;
+    num_nets = 1;
+
+    map_blocks[b1.name] = b1;
+    map_blocks[b2.name] = b2;
+    map_blocks[b3.name] = b3;
+    map_blocks[b4.name] = b4;
+    map_blocks[b5.name] = b5;
+
+    map_terminals[t1.name] = t1;
+    map_terminals[t2.name] = t2;
+    map_terminals[t3.name] = t3;
+    
+    std::variant<Block*, Terminal*> v1 = &(map_blocks["bk1"]);
+    std::variant<Block*, Terminal*> v2 = &(map_blocks["bk2"]);
+    std::variant<Block*, Terminal*> v3 = &(map_blocks["bk3"]);
+    std::variant<Block*, Terminal*> v4 = &(map_blocks["bk4"]);
+    n.net.emplace_back(v1);
+    n.net.emplace_back(v2);
+    n.net.emplace_back(v3);
+    n.net.emplace_back(v4);
+    
+    vec_nets.emplace_back(n);
+
+    outline_width  = 600;
+    outline_height = 1200;
+    
+    std::srand(std::time(nullptr)); 
   }
 };
+
+
+// verify the initialization of positive and negative sequences
+TEST_CASE("verify_initialize_sequence" * doctest::timeout(600)) {
+  SPTest sptest;
+
+  sptest.initialize_sequence();
+
+  //sptest.dump(std::cout);
+
+  REQUIRE(sptest.positive_sequence.size() == sptest.num_blocks);
+  REQUIRE(sptest.negative_sequence.size() == sptest.num_blocks);
+
+  std::vector<std::string> blocks;
+  // check positive_sequence
+  for (auto& sq : sptest.positive_sequence) {
+    blocks.push_back(sq->name);
+  }
+
+  std::vector<std::string>::iterator it;
+  for (it = blocks.begin(); it != blocks.end();) {
+    if (sptest.map_blocks.find(*it) != sptest.map_blocks.end()) {
+      it =  blocks.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+  REQUIRE(blocks.size() == 0);
+  
+  // check negative_sequence
+  for (auto& sq : sptest.negative_sequence) {
+    blocks.push_back(sq->name);
+  }
+
+  for (it = blocks.begin(); it != blocks.end();) {
+    if (sptest.map_blocks.find(*it) != sptest.map_blocks.end()) {
+      it =  blocks.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
+  REQUIRE(blocks.size() == 0);
+}
+
+
+// verify move1
+TEST_CASE("verify_move1" * doctest_timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+ 
+  SUBCASE("SUB : positive sequence only") {
+  
+  std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+  std::vector<Block*> old_negative_sequence = sptest.negative_sequence;
+
+  sptest.move1(0);
+
+  size_t changes = 0;
+  for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
+    if (sptest.positive_sequence[i] == old_positive_sequence[i]) {
+      continue;
+    }
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 
 
 
@@ -1480,3 +1609,12 @@ TEST_CASE("verify_recover" * doctest::timeout(600)) {
   }
 }
 */
+
+
+
+
+
+
+
+
+} // end of namespace fp
