@@ -8,7 +8,7 @@
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
-
+#include <deque>
 
 
 
@@ -25,6 +25,12 @@ public:
   size_t width = 0;
   size_t height = 0;
   std::string name;
+
+  std::vector<Block*> rightof;
+  std::vector<Block*> aboveof;
+
+  int idx_positive_sequence = -1;
+  int idx_negative_sequence = -1;
 };
 
 class Terminal {
@@ -47,6 +53,9 @@ enum Sequence {
 };
 
 
+
+
+
 class SP {
 public:
   std::unordered_map<std::string, Block> map_blocks;
@@ -61,8 +70,18 @@ public:
   size_t num_blocks;
   size_t num_terminals;
   size_t num_nets;
+  
   double alpha = 0;
 
+  // parameters for Simulated Annealing
+  const double initial_temperature = 100.0;
+
+  const double frozen_temperature = 0.1;
+
+  const double decay = 0.85; 
+    
+  const size_t iterations_per_temperature = 1000;
+  
   SP() = default;
 
   SP(double, const std::string&, const std::string&, const std::string&);
@@ -74,6 +93,14 @@ public:
   void move1(const Sequence);
 
   void move2();
+
+  void run();
+
+  void construct_relative_locations();
+  
+  void compute_area();
+
+  void spfa();
 };
 
 
@@ -99,7 +126,10 @@ inline SP::SP(double a, const std::string& input_block_path,
 
   std::string line;
   std::regex reg("\\s+");
-  
+ 
+  /***************  
+   * parsing
+   **************/ 
   // outline of width and height
   std::getline(inBlkFile, line);
   std::sregex_token_iterator it(line.begin(), line.end(), reg, -1);
@@ -181,8 +211,13 @@ inline SP::SP(double a, const std::string& input_block_path,
     }
     vec_nets.emplace_back(n);
   }
-
+  // end of parsing
+  
+  // initialize positive and negative sequences
   initialize_sequence();
+
+  // construct relative locations of blocks
+  //construct_relative_locations();
 
   dump(std::cout);
 }
@@ -199,14 +234,55 @@ inline void SP::initialize_sequence() {
       idx = std::rand()%num_blocks;
     }
     positive_sequence[idx] = &(map_blocks[key]);
-
+    map_blocks[key].idx_positive_sequence = idx;
 
     idx = std::rand()%num_blocks;
     while (negative_sequence[idx] != nullptr) {
       idx = std::rand()%num_blocks;
     }
     negative_sequence[idx] = &(map_blocks[key]);
+    map_blocks[key].idx_negative_sequence = idx;
   }
+}
+
+
+// construct relative locations of blocks
+inline void SP::construct_relative_locations() {
+  int pidx, nidx;
+
+  // construct rightof vector
+  for (auto& ps : positive_sequence) {
+    pidx = ps->idx_positive_sequence+1;
+    nidx = ps->idx_negative_sequence;      
+    //std::cout << "pidx = " << pidx << ", nidx = " << nidx << '\n';
+    while (pidx < num_blocks) {
+      Block* target = positive_sequence[pidx];
+      if (target->idx_negative_sequence > nidx) {
+        ps->rightof.push_back(target);
+      }
+      ++pidx;
+    }
+  }
+
+  // construct aboveof vector
+  for (auto& ps : positive_sequence) {
+    pidx = ps->idx_positive_sequence-1;
+    nidx = ps->idx_negative_sequence;
+
+    while (pidx >= 0) {
+      Block* target = positive_sequence[pidx];
+      if (target->idx_negative_sequence > nidx) {
+        ps->aboveof.push_back(target);
+      }
+      --pidx;
+    }
+  }
+}
+
+
+// compute area
+inline void SP::compute_area() {
+  
 }
 
 
@@ -230,7 +306,17 @@ inline void SP::move1(const Sequence sequence) {
 
     case Sequence::BOTH:
       std::swap(positive_sequence[id1], positive_sequence[id2]);
-      std::swap(negative_sequence[id1], negative_sequence[id2]);
+      
+      auto itr_neg_1 = std::find(
+        negative_sequence.begin(), 
+        negative_sequence.end(), 
+        positive_sequence[id1]);
+      auto itr_neg_2 = std::find(
+        negative_sequence.begin(), 
+        negative_sequence.end(), 
+        positive_sequence[id2]);   
+      
+      std::swap(*itr_neg_1, *itr_neg_2);
     break;
   }
 }
@@ -250,6 +336,20 @@ inline void SP::move2() {
       std::swap(negative_sequence[id]->width, 
                 negative_sequence[id]->height);
     break;
+  }
+}
+
+
+// run SP
+inline void SP::run() {
+  double current_temperature = initial_temperature;
+  
+  while (current_temperature <= frozen_temperature) {
+    for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
+
+    }
+
+    current_temperature *= decay;
   }
 }
 
