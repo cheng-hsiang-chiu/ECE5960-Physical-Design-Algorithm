@@ -8,7 +8,9 @@
 #include <variant>
 #include <list>
 #include <iterator>
+#include <set>
 #include "sp.hpp"
+#include <algorithm>
 
 
 /*
@@ -126,8 +128,10 @@ TEST_CASE("verify_initialize_sequence" * doctest::timeout(600)) {
   REQUIRE(sptest.negative_sequence.size() == sptest.num_blocks);
 
   std::vector<std::string> blocks;
+  size_t index = 0;
   // check positive_sequence
   for (auto& sq : sptest.positive_sequence) {
+    REQUIRE(sq->idx_positive_sequence == index++);
     blocks.push_back(sq->name);
   }
 
@@ -143,7 +147,9 @@ TEST_CASE("verify_initialize_sequence" * doctest::timeout(600)) {
   REQUIRE(blocks.size() == 0);
   
   // check negative_sequence
+  index = 0;
   for (auto& sq : sptest.negative_sequence) {
+    REQUIRE(sq->idx_negative_sequence == index++);
     blocks.push_back(sq->name);
   }
 
@@ -156,6 +162,173 @@ TEST_CASE("verify_initialize_sequence" * doctest::timeout(600)) {
     }
   }
   REQUIRE(blocks.size() == 0);
+}
+
+
+// verify relative locations
+TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+  // positive sequence = [bk1, bk2, bk3, bk4, bk5]
+  // negative sequence = [bk1, bk2, bk3, bk4, bk5]
+  SUBCASE("SUB : case 1") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+  
+    for (auto& [key1, value1] : sptest.map_blocks) {
+      for (auto& [key2, value2] : sptest.map_blocks) {
+        if (key1 != key2) {
+          REQUIRE(value1.aboveof.size() == 0);
+          
+          auto found = std::find(
+            value1.rightof.begin(),
+            value1.rightof.end(),
+            &value2);
+          
+          if (key1 == "bk1") {
+            REQUIRE(found != value1.rightof.end());
+          }
+
+          else if (key1 == "bk2") {
+            if (key2 == "bk1") {
+              REQUIRE(found == value1.rightof.end());
+            }
+            else {
+              REQUIRE(found != value1.rightof.end());
+            }
+          }
+
+          else if (key1 == "bk3") {
+            if (key2 == "bk1" || key2 == "bk2") {
+              REQUIRE(found == value1.rightof.end());
+            }
+            else {
+              REQUIRE(found != value1.rightof.end());
+            }
+          }
+
+          else if (key1 == "bk4") {
+            if (key2 == "bk5") {
+              REQUIRE(found != value1.rightof.end());
+            }
+            else {
+              REQUIRE(found == value1.rightof.end());
+            }
+          }
+
+          else {
+            REQUIRE(found == value1.rightof.end());
+          }
+        }
+      }
+    }
+  } 
+
+  // positive sequence = [bk1, bk3, bk2, bk5, bk4]
+  // negative sequence = [bk4, bk1, bk3, bk5, bk2]
+  SUBCASE("SUB : case 2") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+  
+    for (auto& [key1, value1] : sptest.map_blocks) {
+      for (auto& [key2, value2] : sptest.map_blocks) {
+        if (key1 != key2) {
+          auto found1 = std::find(
+            value1.rightof.begin(),
+            value1.rightof.end(),
+            &value2);
+          
+          auto found2 = std::find(
+            value1.aboveof.begin(),
+            value1.aboveof.end(),
+            &value2);
+          
+          if (key1 == "bk1") {
+            REQUIRE(found2 == value1.aboveof.end());
+            if (key2 == "bk4") {
+              REQUIRE(found1 == value1.rightof.end());
+            }
+            else {
+              REQUIRE(found1 != value1.rightof.end());
+            }
+          }
+
+          else if (key1 == "bk2") {
+            REQUIRE(found2 == value1.aboveof.end());
+            REQUIRE(found1 == value1.rightof.end());
+          }
+
+          else if (key1 == "bk3") {
+            REQUIRE(found2 == value1.aboveof.end());
+            if (key2 == "bk2" || key2 == "bk5") {
+              REQUIRE(found1 != value1.rightof.end());
+            }
+            else {
+              REQUIRE(found1 == value1.rightof.end());
+            }
+          }
+
+          else if (key1 == "bk4") {
+            REQUIRE(found1 == value1.rightof.end());
+            REQUIRE(found2 != value1.aboveof.end());
+          }
+
+          else {
+            if (key2 == "bk2") {
+              REQUIRE(found2 != value1.aboveof.end());
+            }
+            else {
+              REQUIRE(found2 == value1.aboveof.end());
+            }
+            REQUIRE(found1 == value1.rightof.end());
+          }
+        }
+      }
+    }
+  }
 }
 
 
@@ -222,10 +395,88 @@ TEST_CASE("verify_move1" * doctest::timeout(600)) {
       REQUIRE(old_positive_sequence[i] == sptest.positive_sequence[i]);
     }
   }
+
+  SUBCASE("SUB : both sequences") {
+    std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+    std::vector<Block*> old_negative_sequence = sptest.negative_sequence;
+    
+    std::set<std::string> names;
+
+    sptest.move1(Sequence::BOTH);
+
+    size_t changes = 0;
+    for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
+      if (sptest.positive_sequence[i] == old_positive_sequence[i]) {
+        continue;
+      }
+      else {
+        names.insert(sptest.positive_sequence[i]->name);
+        auto found = std::find(
+          old_positive_sequence.begin(), 
+          old_positive_sequence.end(), 
+          sptest.positive_sequence[i]);
+        REQUIRE(found != old_positive_sequence.end());
+        REQUIRE(sptest.positive_sequence[i]->name == (*found)->name);
+        ++changes;
+      }
+    }
+    REQUIRE(changes == 2);
+    
+    changes = 0;
+    for (size_t i = 0; i < sptest.negative_sequence.size(); ++i) {
+      if (sptest.negative_sequence[i] == old_negative_sequence[i]) {
+        continue;
+      }
+      else {
+        names.insert(sptest.negative_sequence[i]->name);
+        auto found = std::find(
+          old_negative_sequence.begin(), 
+          old_negative_sequence.end(), 
+          sptest.negative_sequence[i]);
+        REQUIRE(found != old_negative_sequence.end());
+        REQUIRE(sptest.negative_sequence[i]->name == (*found)->name);
+        ++changes;
+      }
+    }
+    REQUIRE(changes == 2);
+    REQUIRE(names.size() == 2);
+  }
 }
 
 
+// verify move2
+TEST_CASE("verify_move2" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+  
+  std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+  std::vector<Block*> old_negative_sequence = sptest.negative_sequence;
+  
+  sptest.move2();
 
+  size_t changes = 0;
+  for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
+    if (sptest.positive_sequence[i]->width  == old_positive_sequence[i]->width &&
+        sptest.positive_sequence[i]->height == old_positive_sequence[i]->height) {
+      continue;
+    }
+    else {
+      ++changes;
+      REQUIRE(changes == 1);
+    }
+  }
+
+  for (size_t i = 0; i < sptest.negative_sequence.size(); ++i) {
+    if (sptest.negative_sequence[i]->width  == old_negative_sequence[i]->width &&
+        sptest.negative_sequence[i]->height == old_negative_sequence[i]->height) {
+      continue;
+    }
+    else {
+      ++changes;
+      REQUIRE(changes == 1);
+    }
+  }
+}
 
 
 
