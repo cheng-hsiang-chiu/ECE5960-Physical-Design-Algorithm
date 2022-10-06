@@ -11,6 +11,7 @@
 #include <set>
 #include "sp.hpp"
 #include <algorithm>
+#include <climits>
 
 
 /*
@@ -170,6 +171,22 @@ TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
   SPTest sptest;
   sptest.initialize_sequence();
 
+  sptest.source.rightof.clear();
+  sptest.terminus.rightof.clear();
+  sptest.map_blocks["bk1"].rightof.clear();
+  sptest.map_blocks["bk2"].rightof.clear();
+  sptest.map_blocks["bk3"].rightof.clear();
+  sptest.map_blocks["bk4"].rightof.clear();
+  sptest.map_blocks["bk5"].rightof.clear();
+
+  sptest.source.aboveof.clear();
+  sptest.terminus.aboveof.clear();
+  sptest.map_blocks["bk1"].aboveof.clear();
+  sptest.map_blocks["bk2"].aboveof.clear();
+  sptest.map_blocks["bk3"].aboveof.clear();
+  sptest.map_blocks["bk4"].aboveof.clear();
+  sptest.map_blocks["bk5"].aboveof.clear();
+  
   // positive sequence = [bk1, bk2, bk3, bk4, bk5]
   // negative sequence = [bk1, bk2, bk3, bk4, bk5]
   SUBCASE("SUB : case 1") { 
@@ -200,7 +217,8 @@ TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
     for (auto& [key1, value1] : sptest.map_blocks) {
       for (auto& [key2, value2] : sptest.map_blocks) {
         if (key1 != key2) {
-          REQUIRE(value1.aboveof.size() == 0);
+          REQUIRE(value1.aboveof.size() == 1);
+          REQUIRE(value1.aboveof[0] == &sptest.terminus);
           
           auto found = std::find(
             value1.rightof.begin(),
@@ -244,6 +262,40 @@ TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
         }
       }
     }
+
+    // check rightof and aboveof of source and teminus blocks
+    for (auto& [key, value] : sptest.map_blocks) {
+      auto found1 = std::find(
+        sptest.source.rightof.begin(),
+        sptest.source.rightof.end(),
+        &value
+      );
+
+      auto found2 = std::find(
+        sptest.source.aboveof.begin(),
+        sptest.source.aboveof.end(),
+        &value
+      );
+
+      auto found3 = std::find(
+        value.rightof.begin(),
+        value.rightof.end(),
+        &sptest.terminus
+      );
+      
+      auto found4 = std::find(
+        value.aboveof.begin(),
+        value.aboveof.end(),
+        &sptest.terminus
+      );
+
+      REQUIRE(found1 != sptest.source.rightof.end());
+      REQUIRE(found2 != sptest.source.aboveof.end());
+      REQUIRE(found3 != value.rightof.end());
+      REQUIRE(found4 != value.aboveof.end());
+    }
+    REQUIRE(sptest.terminus.rightof.size() == 0);
+    REQUIRE(sptest.terminus.aboveof.size() == 0);
   } 
 
   // positive sequence = [bk1, bk3, bk2, bk5, bk4]
@@ -328,6 +380,278 @@ TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
         }
       }
     }
+    // check rightof and aboveof of source and teminus blocks
+    for (auto& [key, value] : sptest.map_blocks) {
+      auto found1 = std::find(
+        sptest.source.rightof.begin(),
+        sptest.source.rightof.end(),
+        &value
+      );
+
+      auto found2 = std::find(
+        sptest.source.aboveof.begin(),
+        sptest.source.aboveof.end(),
+        &value
+      );
+
+      auto found3 = std::find(
+        value.rightof.begin(),
+        value.rightof.end(),
+        &sptest.terminus
+      );
+      
+      auto found4 = std::find(
+        value.aboveof.begin(),
+        value.aboveof.end(),
+        &sptest.terminus
+      );
+
+      REQUIRE(found1 != sptest.source.rightof.end());
+      REQUIRE(found2 != sptest.source.aboveof.end());
+      REQUIRE(found3 != value.rightof.end());
+      REQUIRE(found4 != value.aboveof.end());
+    }
+    REQUIRE(sptest.terminus.rightof.size() == 0);
+    REQUIRE(sptest.terminus.aboveof.size() == 0);
+  }
+}
+
+
+// verify compute_spfa
+TEST_CASE("verify_compute_spfa" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+  sptest.source.rightof.clear();
+  sptest.terminus.rightof.clear();
+  sptest.map_blocks["bk1"].rightof.clear();
+  sptest.map_blocks["bk2"].rightof.clear();
+  sptest.map_blocks["bk3"].rightof.clear();
+  sptest.map_blocks["bk4"].rightof.clear();
+  sptest.map_blocks["bk5"].rightof.clear();
+
+  sptest.source.aboveof.clear();
+  sptest.terminus.aboveof.clear();
+  sptest.map_blocks["bk1"].aboveof.clear();
+  sptest.map_blocks["bk2"].aboveof.clear();
+  sptest.map_blocks["bk3"].aboveof.clear();
+  sptest.map_blocks["bk4"].aboveof.clear();
+  sptest.map_blocks["bk5"].aboveof.clear();
+
+  // positive sequence = [bk1, bk2, bk3, bk4, bk5]
+  // negative sequence = [bk1, bk2, bk3, bk4, bk5]
+  SUBCASE("SUB : case 1") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+  
+    std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+
+    REQUIRE(distance[0] == 0);
+    REQUIRE(distance[1] == -200);
+    REQUIRE(distance[2] == -800);
+    REQUIRE(distance[3] == -1200);
+    REQUIRE(distance[4] == -1600);
+    REQUIRE(distance[5] == -1800);
+    REQUIRE(distance[6] == -1800);
+    
+    // check vertical area
+    distance = sptest.spfa(Orientation::Vertical);
+    
+    REQUIRE(distance[0] == 0);
+    REQUIRE(distance[1] == -200);
+    REQUIRE(distance[2] == -600);
+    REQUIRE(distance[3] == -200);
+    REQUIRE(distance[4] == -400);
+    REQUIRE(distance[5] == -400);
+    REQUIRE(distance[6] == -600);
+  }
+  
+  // positive sequence = [bk1, bk3, bk2, bk5, bk4]
+  // negative sequence = [bk4, bk1, bk3, bk5, bk2]
+  SUBCASE("SUB : case 2") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+    
+    // check horizontal area
+    std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+    
+    REQUIRE(distance[0] == 0);
+    REQUIRE(distance[1] == -200);
+    REQUIRE(distance[2] == -600);
+    REQUIRE(distance[3] == -1200);
+    REQUIRE(distance[4] == -800);
+    REQUIRE(distance[5] == -400);
+    REQUIRE(distance[6] == -1200);
+
+    // check vertical area
+    distance = sptest.spfa(Orientation::Vertical);
+    REQUIRE(distance[0] == 0);
+    REQUIRE(distance[1] == -600);
+    REQUIRE(distance[2] == -600);
+    REQUIRE(distance[3] == -1400);
+    REQUIRE(distance[4] == -800);
+    REQUIRE(distance[5] == -400);
+    REQUIRE(distance[6] == -1400);
+  }
+}
+
+
+// verify compute_block_locations
+TEST_CASE("verify_compute_block_locations" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+  sptest.source.rightof.clear();
+  sptest.terminus.rightof.clear();
+  sptest.map_blocks["bk1"].rightof.clear();
+  sptest.map_blocks["bk2"].rightof.clear();
+  sptest.map_blocks["bk3"].rightof.clear();
+  sptest.map_blocks["bk4"].rightof.clear();
+  sptest.map_blocks["bk5"].rightof.clear();
+
+  sptest.source.aboveof.clear();
+  sptest.terminus.aboveof.clear();
+  sptest.map_blocks["bk1"].aboveof.clear();
+  sptest.map_blocks["bk2"].aboveof.clear();
+  sptest.map_blocks["bk3"].aboveof.clear();
+  sptest.map_blocks["bk4"].aboveof.clear();
+  sptest.map_blocks["bk5"].aboveof.clear();
+
+  // positive sequence = [bk1, bk2, bk3, bk4, bk5]
+  // negative sequence = [bk1, bk2, bk3, bk4, bk5]
+  SUBCASE("SUB : case 1") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+  
+    std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+    sptest.compute_block_locations(distance, Orientation::Horizontal);
+
+    // check x coordinate 
+    REQUIRE(sptest.map_blocks["bk1"].lower_left_x == 0);
+    REQUIRE(sptest.map_blocks["bk2"].lower_left_x == 200);
+    REQUIRE(sptest.map_blocks["bk3"].lower_left_x == 800);
+    REQUIRE(sptest.map_blocks["bk4"].lower_left_x == 1200);
+    REQUIRE(sptest.map_blocks["bk5"].lower_left_x == 1600);
+    
+    // check y coordinate
+    distance = sptest.spfa(Orientation::Vertical);
+    sptest.compute_block_locations(distance, Orientation::Vertical);
+    
+    REQUIRE(sptest.map_blocks["bk1"].lower_left_y == 0);
+    REQUIRE(sptest.map_blocks["bk2"].lower_left_y == 0);
+    REQUIRE(sptest.map_blocks["bk3"].lower_left_y == 0);
+    REQUIRE(sptest.map_blocks["bk4"].lower_left_y == 0);
+    REQUIRE(sptest.map_blocks["bk5"].lower_left_y == 0);
+  }
+  
+  // positive sequence = [bk1, bk3, bk2, bk5, bk4]
+  // negative sequence = [bk4, bk1, bk3, bk5, bk2]
+  SUBCASE("SUB : case 2") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+    
+    // check x coordinate
+    std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+    sptest.compute_block_locations(distance, Orientation::Horizontal);
+     
+    REQUIRE(sptest.map_blocks["bk1"].lower_left_x == 0);
+    REQUIRE(sptest.map_blocks["bk3"].lower_left_x == 200);
+    REQUIRE(sptest.map_blocks["bk2"].lower_left_x == 600);
+    REQUIRE(sptest.map_blocks["bk5"].lower_left_x == 600);
+    REQUIRE(sptest.map_blocks["bk4"].lower_left_x == 0);
+
+    // check y coordinate
+    distance = sptest.spfa(Orientation::Vertical);
+    sptest.compute_block_locations(distance, Orientation::Vertical);
+    REQUIRE(sptest.map_blocks["bk1"].lower_left_y == 400);
+    REQUIRE(sptest.map_blocks["bk3"].lower_left_y == 400);
+    REQUIRE(sptest.map_blocks["bk2"].lower_left_y == 800);
+    REQUIRE(sptest.map_blocks["bk5"].lower_left_y == 400);
+    REQUIRE(sptest.map_blocks["bk4"].lower_left_y == 0);
   }
 }
 
@@ -486,1429 +810,4 @@ TEST_CASE("verify_move2" * doctest::timeout(600)) {
 
 
 
-
-/*
-
-
-
-// verify the initial gain
-TEST_CASE("verify_initial_gain" * doctest::timeout(600)) {
-  std::srand(std::time(nullptr));
-
-  HypergraphTest hypergraph;
- 
-  //Hypergraph hypergraph(input_file, output_file);
-  //hypergraph.traverse();
-
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-  }
- 
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-  
-  //hypergraph.display_partition();
-
-  //hypergraph.display_cut();
-  //
-  //hypergraph.display_gain();
-
-  //for (it1 = hypergraph.map_nets.begin();
-  //     it1 != hypergraph.map_nets.end(); ++it1) {
-  //  if (it1->second.name == "n2" || 
-  //      it1->second.name == "n3" ||
-  //      it1->second.name == "n4") {
-  //    REQUIRE(it1->second.cut == true);
-  //  }
-  //  else {
-  //    REQUIRE(it1->second.cut == false);
-  //  }
-  //}
-   
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      REQUIRE(it->second.gain == 1);
-    }
-    else if(it->second.name == "c2") {
-      REQUIRE(it->second.gain == -1);
-    }
-    else if (it->second.name == "c3") {
-      REQUIRE(it->second.gain == 0);
-    }
-    else if (it->second.name == "c4") {
-      REQUIRE(it->second.gain == 0);
-    }
-    else if (it->second.name == "c5") {
-      REQUIRE(it->second.gain == 1);
-    }
-  }
-  REQUIRE(hypergraph.max_gain == 1);  
-  REQUIRE(hypergraph.min_gain == -1);  
-}
-
-
-// verify the initial count of cells in each partition
-TEST_CASE("verify_initial_count_cells_each_partition" * doctest::timeout(600)) {
-  
-  //Hypergraph hypergraph(input_file, output_file);
-  HypergraphTest hypergraph;
-
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-  
-  //hypergraph.traverse();
-  //hypergraph.display_partition();
-   
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    if (it1->second.name == "n1") {
-      REQUIRE(it1->second.cnt_cells_p0 == 2);
-      REQUIRE(it1->second.cnt_cells_p1 == 0);
-    }
-    else if (it1->second.name == "n2") {
-      REQUIRE(it1->second.cnt_cells_p0 == 2);
-      REQUIRE(it1->second.cnt_cells_p1 == 1);
-    }
-    else if (it1->second.name == "n3") {
-      REQUIRE(it1->second.cnt_cells_p0 == 1);
-      REQUIRE(it1->second.cnt_cells_p1 == 1);
-    }
-    else if (it1->second.name == "n4") {
-      REQUIRE(it1->second.cnt_cells_p0 == 1);
-      REQUIRE(it1->second.cnt_cells_p1 == 1);
-    }
-    else if (it1->second.name == "n5") {
-      REQUIRE(it1->second.cnt_cells_p0 == 0);
-      REQUIRE(it1->second.cnt_cells_p1 == 2);
-    }
-  }
-}
-
-
-// verify the initial connected cells 
-TEST_CASE("verify_initial_connected_cells" * doctest::timeout(600)) {
-  
-  //Hypergraph hypergraph(input_file, output_file);
-  HypergraphTest hypergraph;
-
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-  
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      REQUIRE(it->second.connected_cells.size() == 4);
-    }
-    
-    else if (it->second.name == "c2") {
-      REQUIRE(it->second.connected_cells.size() == 2);
-      for (auto& cptr : it->second.connected_cells) {
-        REQUIRE(cptr->name != "c5");
-        REQUIRE(cptr->name != "c4");
-      }
-    }
-    
-    else if (it->second.name == "c3") {
-      REQUIRE(it->second.connected_cells.size() == 3);
-      for (auto& cptr : it->second.connected_cells) {
-        REQUIRE(cptr->name != "c5");
-      }
-    }
-    
-    else if (it->second.name == "c4") {
-      REQUIRE(it->second.connected_cells.size() == 2);
-      for (auto& cptr : it->second.connected_cells) {
-        REQUIRE(cptr->name != "c2");
-        REQUIRE(cptr->name != "c5");
-      }
-    }
-    
-    else if (it->second.name == "c5") {
-      REQUIRE(it->second.connected_cells.size() == 1);
-      for (auto& cptr : it->second.connected_cells) {
-        REQUIRE(cptr->name != "c2");
-        REQUIRE(cptr->name != "c3");
-        REQUIRE(cptr->name != "c4");
-      }
-    }
-  }
-}
-
-
-// verify the initial bucket
-TEST_CASE("verify_initial_bucket" * doctest::timeout(600)) {
-  
-  //Hypergraph hypergraph(input_file, output_file);
-  HypergraphTest hypergraph;
-  
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-    it->second.prev = nullptr;
-    it->second.next = nullptr;
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.max_edge = 4;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-
-  hypergraph.bucket.clear();
-   
-  hypergraph.construct_bucket();
-  
-  REQUIRE(hypergraph.bucket.size() == hypergraph.max_edge*2+1);
-
-  for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-    if (i < 3) {
-      REQUIRE(hypergraph.bucket[i] == nullptr);
-    }
-    else if (i == 3) {
-      Cell* head = hypergraph.bucket[i];
-      REQUIRE(head->name == "c2");
-      REQUIRE(head->prev == nullptr);
-      REQUIRE(head->next == nullptr);
-    }
-    else if (i == 4) {
-      Cell* head = hypergraph.bucket[i];
-      size_t cnt = 1;
-      while(head->next) {
-        REQUIRE(head->name != "c1");
-        REQUIRE(head->name != "c2");
-        REQUIRE(head->name != "c5");
-        head = head->next;  
-        ++cnt;
-      }
-      REQUIRE(cnt == 2);
-      REQUIRE(head->name != "c1");
-      REQUIRE(head->name != "c2");
-      REQUIRE(head->name != "c5");
-      REQUIRE(head->prev->name != "c1"); 
-      REQUIRE(head->prev->name != "c2"); 
-      REQUIRE(head->prev->name != "c5"); 
-    }
-    else if (i == 5) {
-      Cell* head = hypergraph.bucket[i];
-      size_t cnt = 1;
-      while(head->next) {
-        REQUIRE(head->name != "c2");
-        REQUIRE(head->name != "c3");
-        REQUIRE(head->name != "c4");
-        head = head->next;  
-        ++cnt;
-      }
-      REQUIRE(cnt == 2);
-      REQUIRE(head->name != "c2");
-      REQUIRE(head->name != "c3");
-      REQUIRE(head->name != "c4");
-      REQUIRE(head->prev->name != "c2"); 
-      REQUIRE(head->prev->name != "c3"); 
-      REQUIRE(head->prev->name != "c4"); 
-    }
-    else if (i > 5) {
-      REQUIRE(hypergraph.bucket[i] == nullptr);
-    }
-  }
-}  
-
-
-// verify the balance_criterion
-TEST_CASE("verify_balance_criterion" * doctest::timeout(600)) {
-  
-  //Hypergraph hypergraph(input_file, output_file);
-  HypergraphTest hypergraph;
-  
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-    it->second.prev = nullptr;
-    it->second.next = nullptr;
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.max_edge = 4;
-  hypergraph.area_lower_bound = 1.25;
-  hypergraph.area_upper_bound = 3.75;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-   
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); 
-       ++it) {
-    
-    if (it->second.name == "c1") {
-      REQUIRE(hypergraph.meet_balance_criterion(&(it->second)) == false);  
-    }
-    else if (it->second.name == "c2") {
-      REQUIRE(hypergraph.meet_balance_criterion(&(it->second)) == false);  
-    }
-    else if (it->second.name == "c3") {
-      REQUIRE(hypergraph.meet_balance_criterion(&(it->second)) == true);  
-    }
-    else if (it->second.name == "c4") {
-      REQUIRE(hypergraph.meet_balance_criterion(&(it->second)) == true);  
-    }
-    else if (it->second.name == "c5") {
-      REQUIRE(hypergraph.meet_balance_criterion(&(it->second)) == true);  
-    }
-  } 
-}
-
-
-// verify the update_gain of c1 moved
-TEST_CASE("verify_update_gain" * doctest::timeout(600)) {
-  
-  //Hypergraph hypergraph(input_file, output_file);
-  HypergraphTest hypergraph;
-  
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-    it->second.prev = nullptr;
-    it->second.next = nullptr;
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.max_edge = 4;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-  hypergraph.bucket.clear();
-  hypergraph.construct_bucket();
- 
- 
-  SUBCASE("SUB : move c1") {
-    Cell* target = &(hypergraph.map_cells["c1"]);
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-    //hypergraph.traverse();
-    //hypergraph.display_cut();
-    //hypergraph.display_gain();
-
-    //for (it1 = hypergraph.map_nets.begin();
-    //     it1 != hypergraph.map_nets.end(); ++it1) {
-    //  if (it1->second.name == "n1") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n2") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n3") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n4") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n5") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //}
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      
-      if (it->second.name == "c1") {
-        continue;
-        //REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == 2);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == -2);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == -1);
-      }
-    }
-
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 2);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 0);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 2);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 0);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 2);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 0);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 2);
-
-  }
- 
-  SUBCASE("SUB : move c2") {
-    Cell* target = &(hypergraph.map_cells["c2"]);
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-
-    //hypergraph.traverse();
-    //hypergraph.display_cut();
-    //hypergraph.display_gain();
-    
-    //for (it1 = hypergraph.map_nets.begin();
-    //     it1 != hypergraph.map_nets.end(); ++it1) {
-    //  if (it1->second.name == "n1") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n2") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n3") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n4") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n5") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //}
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == 4);
-      }
-      else if (it->second.name == "c2") {
-        continue;
-        //REQUIRE(it->second.gain == 1);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == 1);
-      }
-    }
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 2);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 0);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 2);
-  }
-
-  SUBCASE("SUB : move c3") { 
-    Cell* target = &(hypergraph.map_cells["c3"]);
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-
-    //for (it1 = hypergraph.map_nets.begin();
-    //     it1 != hypergraph.map_nets.end(); ++it1) {
-    //  if (it1->second.name == "n1") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n2") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n3") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n4") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n5") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //}
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == -2);
-      }
-      else if (it->second.name == "c3") {
-        continue;
-        //REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 2);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == 1);
-      }
-    }
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 2);
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 0);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 3);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 0);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 1);
-  }
-
-  SUBCASE("SUB : move c4") {
-    Cell* target = &(hypergraph.map_cells["c4"]);
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-
-    //for (it1 = hypergraph.map_nets.begin();
-    //     it1 != hypergraph.map_nets.end(); ++it1) {
-    //  if (it1->second.name == "n1") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n2") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n3") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n4") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n5") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //}
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == 2);
-      }
-      else if (it->second.name == "c4") {
-        continue;
-        //REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == 1);
-      }
-    }
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 2);
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 0);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 2);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 2);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 0);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 1);
-  }
-
-  SUBCASE("SUB : move c5") {
-    Cell* target = &(hypergraph.map_cells["c5"]);
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-
-    //for (it1 = hypergraph.map_nets.begin();
-    //     it1 != hypergraph.map_nets.end(); ++it1) {
-    //  if (it1->second.name == "n1") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n2") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n3") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n4") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n5") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //}
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c5") {
-        continue;
-        //REQUIRE(it->second.gain == -1);
-      }
-    }
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p0 == 2);
-    REQUIRE(hypergraph.map_nets["n1"].cnt_cells_p1 == 0);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p0 == 2);
-    REQUIRE(hypergraph.map_nets["n2"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p0 == 1);
-    REQUIRE(hypergraph.map_nets["n3"].cnt_cells_p1 == 1);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p0 == 2);
-    REQUIRE(hypergraph.map_nets["n4"].cnt_cells_p1 == 0);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p0 == 0);
-    REQUIRE(hypergraph.map_nets["n5"].cnt_cells_p1 == 2);
-  }
-}
-
-
-
-// verify the update_bucket
-TEST_CASE("verify_update_bucket" * doctest::timeout(600)) {
-  
-  //Hypergraph hypergraph(input_file, output_file);
-  HypergraphTest hypergraph;
-  
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-    it->second.prev = nullptr;
-    it->second.next = nullptr;
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.max_edge = 4;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-  hypergraph.bucket.clear();
-  hypergraph.construct_bucket();
-
-  SUBCASE("SUB : Move c1") { 
-    int old_gain = hypergraph.map_cells["c1"].gain;
-    //hypergraph.map_cells["c1"].partition = 1;
-    //hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
-    //hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
-    //hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
-    //hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
-    //hypergraph.map_nets["n3"].cnt_cells_p0 -=1;
-    //hypergraph.map_nets["n3"].cnt_cells_p1 +=1;
-    //hypergraph.map_nets["n4"].cnt_cells_p0 -=1;
-    //hypergraph.map_nets["n4"].cnt_cells_p1 +=1;
- 
-    hypergraph.map_cells["c1"].gain *= (-1); 
-    Cell* target = &(hypergraph.map_cells["c1"]);
-
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-    hypergraph.delete_from_bucket(target);
-
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 2 || i == 4 || i == 5 || i > 6) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 2) {
-        REQUIRE(hypergraph.bucket[i]->name == "c4");
-      }
-      else if (i == 3) {
-        REQUIRE(hypergraph.bucket[i]->name != "c2");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-        REQUIRE(hypergraph.bucket[i]->name != "c1");
-      }
-      else if (i == 6) {
-        REQUIRE(hypergraph.bucket[i]->name == "c2");
-      }
-    }
-  }
-  
-  SUBCASE("SUB : Move c2") { 
-    //int old_gain = hypergraph.map_cells["c2"].gain;
-    //hypergraph.map_cells["c2"].partition = 1;
-    //hypergraph.map_nets["n1"].cnt_cells_p0 -=1;
-    //hypergraph.map_nets["n1"].cnt_cells_p1 +=1;
-    //hypergraph.map_nets["n2"].cnt_cells_p0 -=1;
-    //hypergraph.map_nets["n2"].cnt_cells_p1 +=1;
-    //hypergraph.update_cut_net(&(hypergraph.map_cells["c2"]));
-    //hypergraph.update_gain(&(hypergraph.map_cells["c2"]));
-    //hypergraph.update_bucket(
-    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c2"]));
-
-    hypergraph.map_cells["c2"].gain *= (-1); 
-    Cell* target = &(hypergraph.map_cells["c2"]);
-
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-    hypergraph.delete_from_bucket(target);
-
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 3 || i == 6 || i == 7 || i > 8) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 3) {
-        REQUIRE(hypergraph.bucket[i]->name == "c3");
-      }
-      else if (i == 4) {
-        REQUIRE(hypergraph.bucket[i]->name == "c4");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name == "c5");
-      }
-      else if (i == 8) {
-        REQUIRE(hypergraph.bucket[i]->name == "c1");
-      }
-    }
-  }
-  
-  SUBCASE("SUB : Move c3") { 
-    //int old_gain = hypergraph.map_cells["c3"].gain;
-    //hypergraph.map_cells["c3"].partition = 0;
-    //hypergraph.map_nets["n2"].cnt_cells_p0 +=1;
-    //hypergraph.map_nets["n2"].cnt_cells_p1 -=1;
-    //hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
-    //hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
-    //hypergraph.update_cut_net(&(hypergraph.map_cells["c3"]));
-    //hypergraph.update_gain(&(hypergraph.map_cells["c3"]));
-    //hypergraph.update_bucket(
-    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c3"]));
-
-    hypergraph.map_cells["c3"].gain *= (-1); 
-    Cell* target = &(hypergraph.map_cells["c3"]);
-
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-    hypergraph.delete_from_bucket(target);
-
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 2 || i == 3 || i > 6) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 2) {
-        REQUIRE(hypergraph.bucket[i]->name == "c2");
-      }
-      else if (i == 4) {
-        REQUIRE(hypergraph.bucket[i]->name == "c1");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name == "c5");
-      }
-      else if (i == 6) {
-        REQUIRE(hypergraph.bucket[i]->name == "c4");
-      }
-    }
-  }
-  
-  SUBCASE("SUB : Move c4") { 
-    //int old_gain = hypergraph.map_cells["c4"].gain;
-    //hypergraph.map_cells["c4"].partition = 0;
-    //hypergraph.map_nets["n3"].cnt_cells_p0 +=1;
-    //hypergraph.map_nets["n3"].cnt_cells_p1 -=1;
-    //hypergraph.map_nets["n5"].cnt_cells_p0 +=1;
-    //hypergraph.map_nets["n5"].cnt_cells_p1 -=1;
-    //hypergraph.update_cut_net(&(hypergraph.map_cells["c4"]));
-    //hypergraph.update_gain(&(hypergraph.map_cells["c4"]));
-    //hypergraph.update_bucket(
-    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c4"]));
-
-    hypergraph.map_cells["c4"].gain *= (-1); 
-    Cell* target = &(hypergraph.map_cells["c4"]);
-
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-    hypergraph.delete_from_bucket(target);
-    
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 3 || i == 4 || i > 7) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 3) {
-        REQUIRE(hypergraph.bucket[i]->name != "c3");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-        REQUIRE(hypergraph.bucket[i]->name != "c5");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name == "c5");
-      }
-      else if (i == 6) {
-        REQUIRE(hypergraph.bucket[i]->name == "c3");
-      }
-    }
-  }
-  
-  SUBCASE("SUB : Move c5") { 
-    //int old_gain = hypergraph.map_cells["c5"].gain;
-    //hypergraph.map_cells["c5"].partition = 0;
-    //hypergraph.map_nets["n4"].cnt_cells_p0 +=1;
-    //hypergraph.map_nets["n4"].cnt_cells_p1 -=1;
-    //hypergraph.update_cut_net(&(hypergraph.map_cells["c5"]));
-    //hypergraph.update_gain(&(hypergraph.map_cells["c5"]));
-    //hypergraph.update_bucket(
-    //  old_gain+hypergraph.num_nets(), &(hypergraph.map_cells["c5"]));
-
-    hypergraph.map_cells["c5"].gain *= (-1); 
-    Cell* target = &(hypergraph.map_cells["c5"]);
-
-    for (size_t i = 0; i < target->nets.size(); ++i) { 
-      hypergraph.update_gain(target->nets[i], target);
-    }
-    hypergraph.delete_from_bucket(target);
-    
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 3 || i > 4) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 3) {
-        REQUIRE(hypergraph.bucket[i]->name != "c3");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-        REQUIRE(hypergraph.bucket[i]->name != "c5");
-      }
-      else if (i == 4) {
-        REQUIRE(hypergraph.bucket[i]->name != "c1");
-        REQUIRE(hypergraph.bucket[i]->name != "c2");
-        REQUIRE(hypergraph.bucket[i]->name != "c5");
-      }
-    }
-  }
-}
-
-// verify the find_max_cumulative_gain
-TEST_CASE("verify_find_max_cumulative_gain" * doctest::timeout(600)) {
-  
-  //Hypergraph hypergraph(input_file, output_file);
-  HypergraphTest hypergraph;
-  
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-    it->second.prev = nullptr;
-    it->second.next = nullptr;
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    //it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.max_edge = 4;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-  hypergraph.bucket.clear();
-  hypergraph.construct_bucket();
-
-  hypergraph.locked_cells_gain.clear();
-  
-  SUBCASE("SUB : 1"){
-    hypergraph.locked_cells_gain = std::vector<int>{10,0,0,0,0,0};
-    REQUIRE(hypergraph.find_max_cumulative_gain() == 0);
-  }
-  
-  SUBCASE("SUB : 2"){
-    hypergraph.locked_cells_gain = std::vector<int>{10,-11,0,0,0,0};
-    REQUIRE(hypergraph.find_max_cumulative_gain() == 0);
-  }
-  
-  SUBCASE("SUB : 3"){
-    hypergraph.locked_cells_gain = std::vector<int>{0,0,0,0,0,0};
-    REQUIRE(hypergraph.find_max_cumulative_gain() == 0);
-  }
-  
-  SUBCASE("SUB : 4"){
-    hypergraph.locked_cells_gain = std::vector<int>{10,-11, 11,0,0,0};
-    REQUIRE(hypergraph.find_max_cumulative_gain() == 2);
-  }
-  
-  SUBCASE("SUB : 5"){
-    hypergraph.locked_cells_gain = std::vector<int>{0,0,10,0,-10,0};
-    REQUIRE(hypergraph.find_max_cumulative_gain() == 2);
-  }
-  
-  SUBCASE("SUB : 6"){
-    hypergraph.locked_cells_gain = std::vector<int>{0,11, 11,0,6,0};
-    REQUIRE(hypergraph.find_max_cumulative_gain() == 4);
-  }
-}
-
-
-// verify the recover
-TEST_CASE("verify_recover" * doctest::timeout(600)) {
-  Hypergraph hypergraph(input_file, output_file);
-  
-  std::unordered_map<std::string, Cell>::iterator it;
-  for (it = hypergraph.map_cells.begin(); 
-       it != hypergraph.map_cells.end(); ++it) {
-    if (it->second.name == "c1") {
-      it->second.partition = 0;
-    }
-    else if(it->second.name == "c2") {
-      it->second.partition = 0;
-    }
-    else if (it->second.name == "c3") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c4") {
-      it->second.partition = 1;
-    }
-    else if (it->second.name == "c5") {
-      it->second.partition = 1;
-    }
-    it->second.prev = nullptr;
-    it->second.next = nullptr;
-  }
-  
-  std::unordered_map<std::string, Net>::iterator it1;
-  for (it1 = hypergraph.map_nets.begin(); 
-       it1 != hypergraph.map_nets.end(); ++it1) {
-    it1->second.cut = false;
-    it1->second.cnt_cells_p0 = 0;
-    it1->second.cnt_cells_p1 = 0;
-  }
-
-  hypergraph.max_gain = -1000000;
-  hypergraph.min_gain = 1000000;
-  hypergraph.num_cells_p0 = 2;
-  hypergraph.initialize_count_cells();
-  hypergraph.initialize_gain(); 
-  hypergraph.bucket.clear();
-  hypergraph.construct_bucket();
-
-  // recover c1 = move c1 to another partition
-  SUBCASE("SUB : recover c1") {
-    
-    hypergraph.recover(&(hypergraph.map_cells["c1"]));
-    
-    //for (it1 = hypergraph.map_nets.begin();
-    //     it1 != hypergraph.map_nets.end(); ++it1) {
-    //  if (it1->second.name == "n1") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n2") {
-    //    REQUIRE(it1->second.cut == true);
-    //  }
-    //  else if (it1->second.name == "n3") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n4") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //  else if (it1->second.name == "n5") {
-    //    REQUIRE(it1->second.cut == false);
-    //  }
-    //}
-  
-    //for (it = hypergraph.map_cells.begin(); 
-    //     it != hypergraph.map_cells.end(); ++it) {
-    //  
-    //  if (it->second.name == "c1") {
-    //    REQUIRE(it->second.gain == -1);
-    //  }
-    //  else if (it->second.name == "c2") {
-    //    REQUIRE(it->second.gain == 2);
-    //  }
-    //  else if (it->second.name == "c3") {
-    //    REQUIRE(it->second.gain == -1);
-    //  }
-    //  else if (it->second.name == "c4") {
-    //    REQUIRE(it->second.gain == -2);
-    //  }
-    //  else if (it->second.name == "c5") {
-    //    REQUIRE(it->second.gain == -1);
-    //  }
-    //}
-    //for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-    //  if (i < 3 || i == 5 || i == 6 || i > 7) {
-    //    REQUIRE(hypergraph.bucket[i] == nullptr);
-    //  }
-    //  else if (i == 3) {
-    //    REQUIRE(hypergraph.bucket[i]->name == "c4");
-    //  }
-    //  else if (i == 4) {
-    //    REQUIRE(hypergraph.bucket[i]->name != "c2");
-    //    REQUIRE(hypergraph.bucket[i]->name != "c4");
-    //  }
-    //  else if (i == 7) {
-    //    REQUIRE(hypergraph.bucket[i]->name == "c2");
-    //  }
-    //}
-
-  }
-  
-  // recover c2 = move c2 to another partition
-  SUBCASE("SUB : recover c2") {
-    hypergraph.recover(&(hypergraph.map_cells["c2"]));
-
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == false);
-      }
-    }
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == 4);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == 1);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == 1);
-      }
-    }
-    
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 4 || i == 7 || i == 8 || i > 9) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 4) {
-        REQUIRE(hypergraph.bucket[i]->name == "c3");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name == "c4");
-      }
-      else if (i == 6) {
-        REQUIRE(hypergraph.bucket[i]->name != "c1");
-        REQUIRE(hypergraph.bucket[i]->name != "c3");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-      }
-      else if (i == 9) {
-        REQUIRE(hypergraph.bucket[i]->name == "c1");
-      }
-    }
-  }
-  
-  // recover c3 = move c3 to another partition
-  SUBCASE("SUB : recover c3") {
-    hypergraph.recover(&(hypergraph.map_cells["c3"]));
-
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == true);
-      }
-    }
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == -2);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 2);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == 1);
-      }
-    }
-    
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 3 || i == 4 || i > 7) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 3) {
-        REQUIRE(hypergraph.bucket[i]->name == "c2");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name != "c2");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-        REQUIRE(hypergraph.bucket[i]->name != "c5");
-      }
-      else if (i == 6) {
-        REQUIRE(hypergraph.bucket[i]->name == "c5");
-      }
-      else if (i == 7) {
-        REQUIRE(hypergraph.bucket[i]->name == "c4");
-      }
-    }
-  }
-  
-  // recover c4 = move c4 to another partition
-  SUBCASE("SUB : recover c4") {
-    hypergraph.recover(&(hypergraph.map_cells["c4"]));
-
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == true);
-      }
-    }
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == 2);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == 1);
-      }
-    }
-    
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 4 || i > 7) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 4) {
-        REQUIRE(hypergraph.bucket[i]->name != "c3");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-        REQUIRE(hypergraph.bucket[i]->name != "c5");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name == "c4");
-      }
-      else if (i == 6) {
-        REQUIRE(hypergraph.bucket[i]->name == "c5");
-      }
-      else if (i == 7) {
-        REQUIRE(hypergraph.bucket[i]->name == "c3");
-      }
-    }
-  }
-  
-  // recover c5 = move c5 to another partition
-  SUBCASE("SUB : recover c5") {
-    hypergraph.recover(&(hypergraph.map_cells["c5"]));
-    
-    for (it1 = hypergraph.map_nets.begin();
-         it1 != hypergraph.map_nets.end(); ++it1) {
-      if (it1->second.name == "n1") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n2") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n3") {
-        REQUIRE(it1->second.cut == true);
-      }
-      else if (it1->second.name == "n4") {
-        REQUIRE(it1->second.cut == false);
-      }
-      else if (it1->second.name == "n5") {
-        REQUIRE(it1->second.cut == false);
-      }
-    }
-    
-    for (it = hypergraph.map_cells.begin(); 
-         it != hypergraph.map_cells.end(); ++it) {
-      if (it->second.name == "c1") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c2") {
-        REQUIRE(it->second.gain == -1);
-      }
-      else if (it->second.name == "c3") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c4") {
-        REQUIRE(it->second.gain == 0);
-      }
-      else if (it->second.name == "c5") {
-        REQUIRE(it->second.gain == -1);
-      }
-    }
-    
-    for (size_t i = 0; i < hypergraph.bucket.size(); ++i) {
-      if (i < 4 || i > 5) {
-        REQUIRE(hypergraph.bucket[i] == nullptr);
-      }
-      else if (i == 4) {
-        REQUIRE(hypergraph.bucket[i]->name != "c3");
-        REQUIRE(hypergraph.bucket[i]->name != "c4");
-      }
-      else if (i == 5) {
-        REQUIRE(hypergraph.bucket[i]->name != "c1");
-        REQUIRE(hypergraph.bucket[i]->name != "c2");
-        REQUIRE(hypergraph.bucket[i]->name != "c5");
-      }
-    }
-  }
-}
-*/
-
-
-
-
-
-
-
-
-} // end of namespace fp
+} //end namespace SP
