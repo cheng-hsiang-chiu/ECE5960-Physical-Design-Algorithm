@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
   std::string output_path(argv[4]);
 
   fp::SP sp(alpha, input_block_path, input_net_path, output_path);
+  sp.run();
 
   return 0;
 }

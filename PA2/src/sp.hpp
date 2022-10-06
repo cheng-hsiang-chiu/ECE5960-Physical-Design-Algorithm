@@ -9,7 +9,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <deque>
-
+#include <climits>
 
 
 namespace fp {
@@ -52,7 +52,10 @@ enum Sequence {
   BOTH
 };
 
-
+enum Orientation {
+  Horizontal = 0,
+  Vertical
+};
 
 
 
@@ -81,12 +84,22 @@ public:
   const double decay = 0.85; 
     
   const size_t iterations_per_temperature = 1000;
+ 
+  // source and terminus blocks for horizontal/vertical constraint graph
+  Block source;
+  Block terminus;
+ 
+  // bounding box width and height
+  int bb_width = 0;
+  int bb_height = 0;
   
   SP() = default;
 
   SP(double, const std::string&, const std::string&, const std::string&);
 
   void dump(std::ostream&) const;
+
+  void visualize() const;
 
   void initialize_sequence();
 
@@ -98,9 +111,9 @@ public:
 
   void construct_relative_locations();
   
-  void compute_area();
-
-  void spfa();
+  std::vector<int> spfa(const Orientation);
+  
+  void compute_block_locations(std::vector<int>&, const Orientation);
 };
 
 
@@ -108,6 +121,9 @@ inline SP::SP(double a, const std::string& input_block_path,
               const std::string& input_net_path,
               const std::string& output_path) {
   
+  source.name = "source";
+  terminus.name = "terminus";
+
   std::srand(std::time(nullptr)); 
   
   alpha = a;
@@ -217,9 +233,9 @@ inline SP::SP(double a, const std::string& input_block_path,
   initialize_sequence();
 
   // construct relative locations of blocks
-  //construct_relative_locations();
+  construct_relative_locations();
 
-  dump(std::cout);
+  //dump(std::cout);
 }
 
 
@@ -277,16 +293,114 @@ inline void SP::construct_relative_locations() {
       --pidx;
     }
   }
+  // construct relative locations for source & terminus blocks
+  for (auto& [key, value] : map_blocks) {
+    source.rightof.push_back(&value);
+    source.aboveof.push_back(&value);
+    value.rightof.push_back(&terminus);
+    value.aboveof.push_back(&terminus);
+  }
 }
 
 
-// compute area
-inline void SP::compute_area() {
+inline std::vector<int> SP::spfa(const Orientation orientation) {
+  std::vector<int> distance(num_blocks+2);
+  std::fill_n(distance.begin(), num_blocks+2, INT_MAX);
+  distance[0] = 0;
   
+  std::deque<Block*> Q;
+
+  Q.push_back(&source);
+
+  while (!Q.empty()) {
+    Block* u = Q.front();
+    Q.pop_front();
+   
+    std::vector<Block*>& vec = u->rightof; 
+    if (orientation == Orientation::Vertical) {
+      vec = u->aboveof;
+    }
+
+    size_t indexu = 0, indexv = 0;
+    for (auto& blk : vec) {
+      if (u->idx_positive_sequence == -1) {
+        if (u == &source) {
+          indexu = 0;
+        }
+        else {
+          indexu = num_blocks+1;
+        }
+      }
+      else {
+        indexu = u->idx_positive_sequence+1;
+      }
+
+      if (blk->idx_positive_sequence == -1) {
+        if (blk == &source) {
+          indexv = 0;
+        }
+        else {
+          indexv = num_blocks+1;
+        }
+      }
+      else {
+        indexv = blk->idx_positive_sequence+1;
+      }
+     
+      int weight = 0;
+      if (orientation == Orientation::Horizontal) {
+        weight = -1 * static_cast<int>(blk->width);
+      }
+      else {
+        weight = -1 * static_cast<int>(blk->height);
+      }
+      
+      if (distance[indexu] + weight < distance[indexv]) {
+        distance[indexv] = distance[indexu] + weight;
+
+        if (std::find(Q.begin(), Q.end(), blk) == Q.end()) {
+          Q.push_back(blk);
+        }
+      }
+    }
+  }
+  return distance;
 }
 
 
-// move 1 : swap a random pair of blocks in the positive sequence or negative sequence or both
+// compute the lower left x and y of blocks
+// and overall width and height
+inline void SP::compute_block_locations(std::vector<int>& distance,
+  const Orientation orientation) {
+  
+  switch (orientation) {
+    // horizontal
+    case 0:
+      for (auto& [key, value] : map_blocks) {
+        value.lower_left_x = 
+          -1*distance[value.idx_positive_sequence+1] - value.width;
+
+        bb_width = bb_width > -1*distance[value.idx_positive_sequence+1]
+                   ? bb_width : -1*distance[value.idx_positive_sequence+1];  
+      }
+    break;
+
+    // vertical
+    case 1:
+      for (auto& [key, value] : map_blocks) {
+        value.lower_left_y = 
+          -1*distance[value.idx_positive_sequence+1] - value.height;
+        
+        bb_height = bb_height > -1*distance[value.idx_positive_sequence+1] 
+                    ? bb_height : -1*distance[value.idx_positive_sequence+1];  
+      }
+    break;
+  }
+}
+
+
+// move 1 : swap a random pair of blocks in the positive sequence
+// or negative sequence or both
 inline void SP::move1(const Sequence sequence) {
   size_t id1 = std::rand()%num_blocks;
   size_t id2 = std::rand()%num_blocks;
@@ -343,14 +457,21 @@ inline void SP::move2() {
 // run SP
 inline void SP::run() {
   double current_temperature = initial_temperature;
-  
-  while (current_temperature <= frozen_temperature) {
-    for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
+  std::vector<int> distance = spfa(Orientation::Horizontal);
+  compute_block_locations(distance, Orientation::Horizontal);
+ 
+  distance = spfa(Orientation::Vertical);
+  compute_block_locations(distance, Orientation::Vertical);
+ 
+  dump(std::cout); 
+  //std::cout << "area = " << bb_width << "*" << bb_height << " = " << bb_width* bb_height << '\n'; 
+  //while (current_temperature <= frozen_temperature) {
+  //  for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
 
-    }
+  //  }
 
-    current_temperature *= decay;
-  }
+  //  current_temperature *= decay;
+  //}
 }
 
 
@@ -405,10 +526,53 @@ inline void SP::dump(std::ostream& os) const {
     os << ns->name << ' '; 
   }
   os << '\n';
+
+  os << "Relative Locations : \n";
+  for (auto& [key, value] : map_blocks) {
+    os << key << ".rightof = [";
+    for (auto& v : value.rightof) {
+      os << v->name << ", ";
+    }
+    os << "]\n";
+  }
+  
+  for (auto& [key, value] : map_blocks) {
+    os << key << ".aboveof = [";
+    for (auto& v : value.aboveof) {
+      os << v->name << ", ";
+    }
+    os << "]\n";
+  }
+
+  os << "Area = " << bb_width 
+     << " * "     << bb_height
+     << " = "     << bb_width * bb_height << '\n'; 
+
+  visualize();
 }
 
 
-
+inline void SP::visualize() const {
+  std::cout << "{\"block_number\":" << num_blocks << ",";
+  std::cout << "\"llx\":0,\"lly\":0,"
+            << "\"urx\":" << bb_width  << ","
+            << "\"ury\":" << bb_height << ","
+            << "\"area\":" << bb_width*bb_height << ","
+            << "\"coordinates\":[";
+  
+  size_t blks = 0;
+  for (auto& [key, value] : map_blocks) {
+    std::cout << "{\"idx\":\"" << key << "\","
+              << "\"llx\":" << value.lower_left_x << ","
+              << "\"lly\":" << value.lower_left_y << ","
+              << "\"width\":" << value.width << ","
+              << "\"height\":" << value.height << "}";
+    if (blks++ < num_blocks-1) {
+      std::cout << ",";
+    }
+  }
+  std::cout << "]}" << '\n';
+}
 
 
 
