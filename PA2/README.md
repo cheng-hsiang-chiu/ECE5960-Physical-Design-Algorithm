@@ -173,6 +173,13 @@ chmod 744 ./run.sh
 ./run.sh
 ```
 
+## Visualization
+A visualization is available https://cheng-hsiang-chiu.github.io/fp-visualization/
+Simply follow the below format and paste it on the link.
+```
+{"block_number":5,"llx":0,"lly":0,"urx":1400,"ury":600,"area":840000,"coordinates":[{"idx":"bk4","llx":0,"lly":200,"width":400,"height":400},{"idx":"bk5","llx":400,"lly":200,"width":200,"height":400},{"idx":"bk3","llx":0,"lly":0,"width":400,"height":200},{"idx":"bk1","llx":1200,"lly":0,"width":200,"height":200},{"idx":"bk2","llx":600,"lly":0,"width":600,"height":600}]}
+```
+
 
 ## Reference
 - Hiroshi Murata, Kunihiro Fujiyoshi, Shigetoshi Nakatake, Yoji Kajitani, "VLSI Module Placement Based on Rectangle-Packing by the Sequence-Pair," in "*IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*," 1996 [[link](./paper/VLSI_Module_Placement_Based_on_Rectangle-Packing_by_the_Sequence-Pair.pdf)]
