@@ -656,6 +656,104 @@ TEST_CASE("verify_compute_block_locations" * doctest::timeout(600)) {
 }
 
 
+// verify compute_hpwl
+TEST_CASE("verify_compute_hpwl" * doctest::timeout(600)) {
+  SPTest sptest; 
+  sptest.initialize_sequence();
+  
+  sptest.source.rightof.clear();
+  sptest.terminus.rightof.clear();
+  sptest.map_blocks["bk1"].rightof.clear();
+  sptest.map_blocks["bk2"].rightof.clear();
+  sptest.map_blocks["bk3"].rightof.clear();
+  sptest.map_blocks["bk4"].rightof.clear();
+  sptest.map_blocks["bk5"].rightof.clear();
+
+  sptest.source.aboveof.clear();
+  sptest.terminus.aboveof.clear();
+  sptest.map_blocks["bk1"].aboveof.clear();
+  sptest.map_blocks["bk2"].aboveof.clear();
+  sptest.map_blocks["bk3"].aboveof.clear();
+  sptest.map_blocks["bk4"].aboveof.clear();
+  sptest.map_blocks["bk5"].aboveof.clear();
+
+  // positive sequence = [bk1, bk2, bk3, bk4, bk5]
+  // negative sequence = [bk1, bk2, bk3, bk4, bk5]
+  SUBCASE("SUB : case 1") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+  
+    std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+    sptest.compute_block_locations(distance, Orientation::Horizontal);
+
+    distance = sptest.spfa(Orientation::Vertical);
+    sptest.compute_block_locations(distance, Orientation::Vertical);
+
+    int hpwl = sptest.compute_hpwl();
+    REQUIRE(hpwl == 1500);
+  }
+
+  // positive sequence = [bk1, bk3, bk2, bk5, bk4]
+  // negative sequence = [bk4, bk1, bk3, bk5, bk2]
+  SUBCASE("SUB : case 2") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations();
+    
+    std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+    sptest.compute_block_locations(distance, Orientation::Horizontal);
+
+    distance = sptest.spfa(Orientation::Vertical);
+    sptest.compute_block_locations(distance, Orientation::Vertical);
+
+    int hpwl = sptest.compute_hpwl();
+    REQUIRE(hpwl == 1700);
+  }
+
+}
+
+
 // verify move1
 TEST_CASE("verify_move1" * doctest::timeout(600)) {
   SPTest sptest;
