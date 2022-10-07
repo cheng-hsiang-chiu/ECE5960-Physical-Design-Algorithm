@@ -114,6 +114,10 @@ public:
   std::vector<int> spfa(const Orientation);
   
   void compute_block_locations(std::vector<int>&, const Orientation);
+
+  void compute_area(const std::vector<int>&);
+
+  int compute_hpwl();
 };
 
 
@@ -368,6 +372,54 @@ inline std::vector<int> SP::spfa(const Orientation orientation) {
 }
 
 
+// compute HPWL
+inline int SP::compute_hpwl() {
+  int hpwl = 0;
+  for (auto& net : vec_nets) {
+    std::vector<Terminal*> terminals;
+
+    int max_x = 0, min_x = INT_MAX, max_y = 0, min_y = INT_MAX;
+    int llx = 0, lly = 0;
+    for (auto& n : net.net) {
+      // terminal in a net
+      if (std::holds_alternative<Terminal*>(n)) {
+        terminals.push_back(std::get<Terminal*>(n));
+      }
+      // blocks in a net
+      else {
+        llx = std::get<Block*>(n)->lower_left_x + std::get<Block*>(n)->width/2;
+        lly = std::get<Block*>(n)->lower_left_y + std::get<Block*>(n)->height/2; 
+        if (llx > max_x) {
+          max_x = llx;    
+        }
+        if (llx < min_x) {
+          min_x = llx;
+        }
+        if (lly > max_y) {
+          max_y = lly;
+        }
+        if (lly < min_y) {
+          min_y = lly;
+        }
+      }
+    }
+
+    hpwl = hpwl + (max_x-min_x) + (max_y-min_y);
+    
+    // length to terminals
+    int center_x = (max_x + min_x)/2;
+    int center_y = (max_y + min_y)/2;
+    for (auto& t : terminals) {
+      hpwl = hpwl + 
+             std::abs(center_x-static_cast<int>(t->pos_x)) + 
+             std::abs(center_y-static_cast<int>(t->pos_y));  
+    }
+  }
+  
+  return hpwl;
+}
+
+
 // compute the lower left x and y of blocks
 // and overall width and height
 inline void SP::compute_block_locations(std::vector<int>& distance,
@@ -380,8 +432,8 @@ inline void SP::compute_block_locations(std::vector<int>& distance,
         value.lower_left_x = 
           -1*distance[value.idx_positive_sequence+1] - value.width;
 
-        bb_width = bb_width > -1*distance[value.idx_positive_sequence+1]
-                   ? bb_width : -1*distance[value.idx_positive_sequence+1];  
+        //bb_width = bb_width > -1*distance[value.idx_positive_sequence+1]
+        //           ? bb_width : -1*distance[value.idx_positive_sequence+1];  
       }
     break;
 
@@ -391,10 +443,22 @@ inline void SP::compute_block_locations(std::vector<int>& distance,
         value.lower_left_y = 
           -1*distance[value.idx_positive_sequence+1] - value.height;
         
-        bb_height = bb_height > -1*distance[value.idx_positive_sequence+1] 
-                    ? bb_height : -1*distance[value.idx_positive_sequence+1];  
+        //bb_height = bb_height > -1*distance[value.idx_positive_sequence+1] 
+        //            ? bb_height : -1*distance[value.idx_positive_sequence+1];  
       }
     break;
+  }
+}
+
+
+// compute the bounding box area 
+inline void SP::compute_area(const std::vector<int>& distance) {
+  for (auto& [key, value] : map_blocks) {
+
+    bb_width = bb_width > -1*distance[value.idx_positive_sequence+1]
+               ? bb_width : -1*distance[value.idx_positive_sequence+1];  
+    bb_height = bb_height > -1*distance[value.idx_positive_sequence+1] 
+               ? bb_height : -1*distance[value.idx_positive_sequence+1];  
   }
 }
 
@@ -462,9 +526,9 @@ inline void SP::run() {
  
   distance = spfa(Orientation::Vertical);
   compute_block_locations(distance, Orientation::Vertical);
- 
+  compute_area(distance); 
   dump(std::cout); 
-  //std::cout << "area = " << bb_width << "*" << bb_height << " = " << bb_width* bb_height << '\n'; 
+  
   //while (current_temperature <= frozen_temperature) {
   //  for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
 
