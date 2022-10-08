@@ -750,7 +750,58 @@ TEST_CASE("verify_compute_hpwl" * doctest::timeout(600)) {
     int hpwl = sptest.compute_hpwl();
     REQUIRE(hpwl == 1700);
   }
+}
 
+
+// verify initialize_backup_data
+TEST_CASE("verify_backup_data" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+  // positive sequence = [bk1, bk3, bk2, bk5, bk4]
+  // negative sequence = [bk4, bk1, bk3, bk5, bk2]
+  sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+  sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+  sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+  sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+  sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+  sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+  sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+  sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+  sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+  sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+  
+  sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+  sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+  sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+  sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+  sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+  sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+  sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+  sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+  sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+  sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+  sptest.construct_relative_locations();
+  
+  std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+  sptest.compute_block_locations(distance, Orientation::Horizontal);
+
+  distance = sptest.spfa(Orientation::Vertical);
+  sptest.compute_block_locations(distance, Orientation::Vertical);
+
+  sptest.initialize_backup_data();
+
+  for (auto& [key, value] : sptest.map_blocks) {
+    REQUIRE(value.width == value.backup_width);
+    REQUIRE(value.height == value.backup_height);
+    REQUIRE(value.lower_left_x == value.backup_lower_left_x);
+    REQUIRE(value.lower_left_y == value.backup_lower_left_y);
+    REQUIRE(value.idx_positive_sequence == value.backup_idx_positive_sequence);
+    REQUIRE(value.idx_negative_sequence == value.backup_idx_negative_sequence);
+    REQUIRE(value.rightof == value.backup_rightof);
+    REQUIRE(value.aboveof == value.backup_aboveof);
+  }
 }
 
 
