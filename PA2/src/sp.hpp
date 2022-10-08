@@ -10,27 +10,40 @@
 #include <ctime>
 #include <deque>
 #include <climits>
+#include <random>
 
 
 namespace fp {
 
+// random generator
+static size_t random_value() {
+  static std::minstd_rand engine{std::random_device{}()};
+  static std::uniform_int_distribution<size_t> distribution;
+  return distribution(engine);
+}
 
 
 class Block {
 public:
   size_t lower_left_x = 0;
   size_t lower_left_y = 0;
-  size_t upper_right_x = 0;
-  size_t upper_right_y = 0;
+  size_t backup_lower_left_x = 0;
+  size_t backup_lower_left_y = 0;
   size_t width = 0;
   size_t height = 0;
+  size_t backup_width = 0;
+  size_t backup_height = 0;
   std::string name;
 
   std::vector<Block*> rightof;
   std::vector<Block*> aboveof;
+  std::vector<Block*> backup_rightof;
+  std::vector<Block*> backup_aboveof;
 
   int idx_positive_sequence = -1;
   int idx_negative_sequence = -1;
+  int backup_idx_positive_sequence = -1;
+  int backup_idx_negative_sequence = -1;
 };
 
 class Terminal {
@@ -89,10 +102,14 @@ public:
   Block source;
   Block terminus;
  
-  // bounding box width and height
+  // bounding box width and height and its backups
   int bb_width = 0;
   int bb_height = 0;
+  int backup_bb_width = 0;
+  int backup_bb_height = 0; 
   
+
+
   SP() = default;
 
   SP(double, const std::string&, const std::string&, const std::string&);
@@ -109,6 +126,8 @@ public:
 
   void run();
 
+  double run_one();
+
   void construct_relative_locations();
   
   std::vector<int> spfa(const Orientation);
@@ -117,14 +136,16 @@ public:
 
   void compute_area(const std::vector<int>&);
 
-  int compute_hpwl();
+  int compute_hpwl() const;
+
+  void initialize_backup_data();
 };
 
 
 inline SP::SP(double a, const std::string& input_block_path, 
               const std::string& input_net_path,
               const std::string& output_path) {
-  
+
   source.name = "source";
   terminus.name = "terminus";
 
@@ -186,6 +207,8 @@ inline SP::SP(double a, const std::string& input_block_path,
       blk.height = std::stoi(*(++it));
       map_blocks[blk.name] = blk;
       ++num_lines;
+
+
     }
 
     // settings of terminals
@@ -248,17 +271,22 @@ inline void SP::initialize_sequence() {
   positive_sequence.resize(num_blocks); 
   negative_sequence.resize(num_blocks);
   
-  size_t idx = std::rand()%num_blocks; 
+  //size_t idx = std::rand()%num_blocks; 
+  size_t idx = random_value()%num_blocks;
+
   for (auto& [key, value] : map_blocks) {
     while (positive_sequence[idx] != nullptr) {
-      idx = std::rand()%num_blocks;
+      //idx = std::rand()%num_blocks;
+      idx = random_value()%num_blocks;
     }
     positive_sequence[idx] = &(map_blocks[key]);
     map_blocks[key].idx_positive_sequence = idx;
 
-    idx = std::rand()%num_blocks;
+    //idx = std::rand()%num_blocks;
+    idx = random_value()%num_blocks;
     while (negative_sequence[idx] != nullptr) {
-      idx = std::rand()%num_blocks;
+      //idx = std::rand()%num_blocks;
+      idx = random_value()%num_blocks;
     }
     negative_sequence[idx] = &(map_blocks[key]);
     map_blocks[key].idx_negative_sequence = idx;
@@ -373,7 +401,7 @@ inline std::vector<int> SP::spfa(const Orientation orientation) {
 
 
 // compute HPWL
-inline int SP::compute_hpwl() {
+inline int SP::compute_hpwl() const {
   int hpwl = 0;
   for (auto& net : vec_nets) {
     std::vector<Terminal*> terminals;
@@ -466,11 +494,15 @@ inline void SP::compute_area(const std::vector<int>& distance) {
 // move 1 : swap a random pair of blocks in the positive sequence
 // or negative sequence or both
 inline void SP::move1(const Sequence sequence) {
-  size_t id1 = std::rand()%num_blocks;
-  size_t id2 = std::rand()%num_blocks;
+
+  //size_t id1 = std::rand()%num_blocks;
+  //size_t id2 = std::rand()%num_blocks;
+  size_t id1 = random_value()%num_blocks;
+  size_t id2 = random_value()%num_blocks;
 
   while (id1 == id2) {
-    id2 = std::rand()%num_blocks;
+    //id2 = std::rand()%num_blocks;
+    id2 = random_value()%num_blocks;
   }
 
   switch (sequence) {
@@ -484,17 +516,19 @@ inline void SP::move1(const Sequence sequence) {
 
     case Sequence::BOTH:
       std::swap(positive_sequence[id1], positive_sequence[id2]);
-      
-      auto itr_neg_1 = std::find(
-        negative_sequence.begin(), 
-        negative_sequence.end(), 
-        positive_sequence[id1]);
-      auto itr_neg_2 = std::find(
-        negative_sequence.begin(), 
-        negative_sequence.end(), 
-        positive_sequence[id2]);   
-      
-      std::swap(*itr_neg_1, *itr_neg_2);
+     
+      std::swap(negative_sequence[positive_sequence[id1]->idx_negative_sequence],
+                negative_sequence[positive_sequence[id2]->idx_negative_sequence]); 
+      //auto itr_neg_1 = std::find(
+      //  negative_sequence.begin(), 
+      //  negative_sequence.end(), 
+      //  positive_sequence[id1]);
+      //auto itr_neg_2 = std::find(
+      //  negative_sequence.begin(), 
+      //  negative_sequence.end(), 
+      //  positive_sequence[id2]);   
+      //
+      //std::swap(*itr_neg_1, *itr_neg_2);
     break;
   }
 }
@@ -502,9 +536,11 @@ inline void SP::move1(const Sequence sequence) {
 
 // move 2 : rotate a randomly selected block
 inline void SP::move2() {
-  size_t id = std::rand()%num_blocks;
+  //size_t id = std::rand()%num_blocks;
+  size_t id = random_value()%num_blocks;
 
-  switch(std::rand()%2) {
+  //switch (std::rand()%2) {
+  switch (random_value()%2) {
     case 0:
       std::swap(positive_sequence[id]->width, 
                 positive_sequence[id]->height);
@@ -518,24 +554,78 @@ inline void SP::move2() {
 }
 
 
-// run SP
-inline void SP::run() {
-  double current_temperature = initial_temperature;
+// backup the data 
+inline void SP::initialize_backup_data() {
+  for (auto& [key, value] : map_blocks) {
+    value.backup_width = value.width;
+    value.backup_height = value.height;
+    value.backup_lower_left_x = value.lower_left_x;
+    value.backup_lower_left_y = value.lower_left_y;
+    value.backup_rightof = value.rightof;
+    value.backup_aboveof = value.aboveof;
+    value.backup_idx_positive_sequence = value.idx_positive_sequence;
+    value.backup_idx_negative_sequence = value.idx_negative_sequence;
+  }
+
+  backup_bb_width = bb_width;
+  backup_bb_height = bb_height;
+}
+
+
+// run SP one time
+inline double SP::run_one() {
   std::vector<int> distance = spfa(Orientation::Horizontal);
   compute_block_locations(distance, Orientation::Horizontal);
- 
   distance = spfa(Orientation::Vertical);
   compute_block_locations(distance, Orientation::Vertical);
-  compute_area(distance); 
-  dump(std::cout); 
   
-  //while (current_temperature <= frozen_temperature) {
-  //  for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
+  compute_area(distance); 
+  
+  int hpwl = compute_hpwl();
+  //dump(std::cout); 
+  //std::cout << "hpwl = " << hpwl << '\n';
+  
+  return alpha*bb_width*bb_height + (1-alpha) * hpwl; 
+}
 
-  //  }
 
-  //  current_temperature *= decay;
-  //}
+
+// run SP with SA
+inline void SP::run() {
+  double current_temperature = initial_temperature;
+ 
+  // first run
+  double backup_cost = run_one();
+  double cost = backup_cost;
+  
+  // backup data  
+  std::vector<Block*> backup_positive_sequence = positive_sequence;
+  std::vector<Block*> backup_negative_sequence = negative_sequence;
+  initialize_backup_data(); 
+   
+  std::uniform_int_distribution<> distr(0, 1); 
+  // SA 
+   
+  while (current_temperature > frozen_temperature) {
+    for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
+      
+      switch (random_value()%2) {
+        // a new neighbor from move1
+        case 0:
+          // move1();
+          std::cout << "iteration " << ite << ", temperature : " << current_temperature << ", move 1 chosen" << '\n';
+        break;
+        // a new neighbor from move2 
+        case 1:
+          //move2();
+          std::cout << "iteration " << ite << ", temperature : " << current_temperature << ", move 2 chosen" << '\n';
+        break;
+      }
+    }
+
+    current_temperature *= decay;
+  }
+  
 }
 
 
@@ -553,8 +643,8 @@ inline void SP::dump(std::ostream& os) const {
        << ", height : "   << value.height
        << ", lf.x : "     << value.lower_left_x
        << ", lf.y : "     << value.lower_left_y
-       << ", ur.x : "     << value.upper_right_x
-       << ", ur.y : "     << value.upper_right_y
+       << ", ur.x : "     << (value.lower_left_x + value.width)
+       << ", ur.y : "     << (value.lower_left_y + value.height)
        << '\n';
   }
   
