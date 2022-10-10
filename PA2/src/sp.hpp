@@ -15,10 +15,13 @@
 
 namespace fp {
 
+
+
 // random generator
+static std::minstd_rand engine{std::random_device{}()};
+static std::uniform_int_distribution<size_t> distribution;
+static size_t max_dist = distribution.max();
 static size_t random_value() {
-  static std::minstd_rand engine{std::random_device{}()};
-  static std::uniform_int_distribution<size_t> distribution;
   return distribution(engine);
 }
 
@@ -71,6 +74,13 @@ enum Orientation {
 };
 
 
+enum MoveType {
+  move1 = 1,
+  move2,
+  move3,
+  move4
+};
+
 
 class SP {
 public:
@@ -80,6 +90,8 @@ public:
 
   std::vector<Block*> positive_sequence;
   std::vector<Block*> negative_sequence;
+  std::vector<Block*> backup_positive_sequence;
+  std::vector<Block*> backup_negative_sequence;
 
   size_t outline_width;
   size_t outline_height;
@@ -120,15 +132,21 @@ public:
 
   void initialize_sequence();
 
-  void move1(const Sequence);
+  //void move1(const Sequence);
 
-  void move2();
+  std::pair<size_t, size_t> move1();
+  
+  std::pair<size_t, size_t> move2();
+
+  std::pair<size_t, size_t> move3();
+  
+  std::pair<size_t, size_t> move4();
 
   void run();
 
-  double run_one();
+  double pack();
 
-  void construct_relative_locations();
+  void construct_relative_locations(const size_t, const size_t);
   
   std::vector<int> spfa(const Orientation);
   
@@ -139,6 +157,10 @@ public:
   int compute_hpwl() const;
 
   void initialize_backup_data();
+
+  void update_backup_data(const size_t, const size_t, const MoveType);
+
+  void resume_backup_data();
 };
 
 
@@ -207,8 +229,6 @@ inline SP::SP(double a, const std::string& input_block_path,
       blk.height = std::stoi(*(++it));
       map_blocks[blk.name] = blk;
       ++num_lines;
-
-
     }
 
     // settings of terminals
@@ -260,7 +280,7 @@ inline SP::SP(double a, const std::string& input_block_path,
   initialize_sequence();
 
   // construct relative locations of blocks
-  construct_relative_locations();
+  construct_relative_locations(0, num_blocks-1);
 
   //dump(std::cout);
 }
@@ -294,6 +314,58 @@ inline void SP::initialize_sequence() {
 }
 
 
+// construct relative locations of blocks between [id1, id2]
+// id1 and id2 are index of positive sequence
+inline void SP::construct_relative_locations(
+  const size_t id1, const size_t id2 ) {
+  int pidx, nidx;
+
+  // construct rightof vector
+  for (size_t i = id1; i <= id2; ++i) {
+    positive_sequence[i]->rightof.clear();
+    pidx = i+1;
+    nidx = positive_sequence[i]->idx_negative_sequence;
+    while (pidx <= id2) {
+      Block* target = positive_sequence[pidx];
+      if (target->idx_negative_sequence > nidx) {
+        positive_sequence[i]->rightof.push_back(target);  
+      }
+      ++pidx;
+    }
+  }
+
+  // construct aboveof vector
+  for (size_t i = id1; i <= id2; ++i) {
+    positive_sequence[i]->aboveof.clear();
+    pidx = static_cast<int>(i)-1;
+    nidx = positive_sequence[i]->idx_negative_sequence; 
+
+    while (pidx >= 0)  {
+      Block* target = positive_sequence[pidx];
+      if (target->idx_negative_sequence > nidx) {
+        positive_sequence[i]->aboveof.push_back(target);
+      }
+      --pidx;
+    }
+  }
+
+  // rightof and aboveof regarding source and 
+  // terminus blocks have been inserted
+  if (source.rightof.size() != 0) {
+    return; 
+  }
+
+  // construct relative locations for source & terminus blocks
+  for (auto& [key, value] : map_blocks) {
+    source.rightof.push_back(&value);
+    source.aboveof.push_back(&value);
+    value.rightof.push_back(&terminus);
+    value.aboveof.push_back(&terminus);
+  }
+}
+
+
+/*
 // construct relative locations of blocks
 inline void SP::construct_relative_locations() {
   int pidx, nidx;
@@ -333,6 +405,7 @@ inline void SP::construct_relative_locations() {
     value.aboveof.push_back(&terminus);
   }
 }
+*/
 
 
 inline std::vector<int> SP::spfa(const Orientation orientation) {
@@ -491,8 +564,8 @@ inline void SP::compute_area(const std::vector<int>& distance) {
 }
 
 
+/*
 // move 1 : swap a random pair of blocks in the positive sequence
-// or negative sequence or both
 inline void SP::move1(const Sequence sequence) {
 
   //size_t id1 = std::rand()%num_blocks;
@@ -532,13 +605,88 @@ inline void SP::move1(const Sequence sequence) {
     break;
   }
 }
+*/
 
 
-// move 2 : rotate a randomly selected block
-inline void SP::move2() {
+// move 1 : swp a random pair of blocks in the positive sequence
+inline std::pair<size_t, size_t> SP::move1() {
+  size_t id1 = random_value()%num_blocks;
+  size_t id2 = random_value()%num_blocks;
+
+  while (id1 == id2) {
+    id2 = random_value()%num_blocks;
+  }
+
+  std::swap(positive_sequence[id1], positive_sequence[id2]);
+  positive_sequence[id1]->idx_positive_sequence = id1;
+  positive_sequence[id2]->idx_positive_sequence = id2;
+ 
+  if (id1 > id2) { 
+    std::swap(id1, id2);
+  }
+  return std::make_pair(id1, id2);
+}
+
+
+// move 2 : swap a random pair of blocks in the negative sequence
+inline std::pair<size_t, size_t> SP::move2() {
+  size_t id1 = random_value()%num_blocks;
+  size_t id2 = random_value()%num_blocks;
+
+  while (id1 == id2) {
+    id2 = random_value()%num_blocks;
+  }
+
+  std::swap(negative_sequence[id1], negative_sequence[id2]);
+  negative_sequence[id1]->idx_negative_sequence = id1;
+  negative_sequence[id2]->idx_negative_sequence = id2;
+ 
+  if (id1 > id2) {
+    std::swap(id1, id2);
+  }
+  return std::make_pair(id1, id2);
+}
+
+
+// move 3 : swap a random pair of blocks in both sequences 
+inline std::pair<size_t, size_t> SP::move3() {
+  size_t id1 = random_value()%num_blocks;
+  size_t id2 = random_value()%num_blocks;
+
+  while (id1 == id2) {
+    id2 = random_value()%num_blocks;
+  }
+
+  std::swap(positive_sequence[id1], positive_sequence[id2]);
+  positive_sequence[id1]->idx_positive_sequence = id1;
+  positive_sequence[id2]->idx_positive_sequence = id2;
+ 
+  size_t nid1 = positive_sequence[id1]->idx_negative_sequence;
+  size_t nid2 = positive_sequence[id2]->idx_negative_sequence;
+  std::swap(negative_sequence[nid1], negative_sequence[nid2]);
+  negative_sequence[nid1]->idx_negative_sequence = nid1;
+  negative_sequence[nid2]->idx_negative_sequence = nid2;
+
+ 
+  if (id1 > id2) {
+    std::swap(id1, id2);
+  }
+  return std::make_pair(id1, id2);
+}
+
+
+// move 4 : rotate a randomly selected block
+inline std::pair<size_t, size_t> SP::move4() {
   //size_t id = std::rand()%num_blocks;
   size_t id = random_value()%num_blocks;
 
+  while (positive_sequence[id]->width == positive_sequence[id]->height) {
+    id = random_value()%num_blocks;
+  }
+  std::swap(positive_sequence[id]->width,
+            positive_sequence[id]->height);
+
+  /*
   //switch (std::rand()%2) {
   switch (random_value()%2) {
     case 0:
@@ -551,6 +699,8 @@ inline void SP::move2() {
                 negative_sequence[id]->height);
     break;
   }
+  */
+  return std::make_pair(id, id);
 }
 
 
@@ -572,8 +722,48 @@ inline void SP::initialize_backup_data() {
 }
 
 
+// update backup data
+// copy modified data to backup data
+inline void SP::update_backup_data(
+  const size_t id1, const size_t id2, const MoveType move_type) {
+
+  switch(move_type) {
+    case 1:
+      std::swap(backup_positive_sequence[id1], backup_positive_sequence[id2]);
+    break;
+    
+    case 2:
+      std::swap(backup_negative_sequence[id1], backup_negative_sequence[id2]);
+    break;
+
+    case 3:
+      std::swap(backup_positive_sequence[id1], backup_positive_sequence[id2]);
+
+      std::swap(backup_negative_sequence[
+                backup_positive_sequence[id1]->idx_negative_sequence],
+                backup_negative_sequence[
+                backup_positive_sequence[id2]->idx_negative_sequence]); 
+    break;
+
+    case 4:
+      std::cerr << "Move4 does not update positive and negative sequence\n";
+      exit(-1);
+    break;
+  }
+}
+
+
+// resume backup data
+// resume data from backup data
+inline void SP::resume_backup_data() {
+
+}
+
+
+
+
 // run SP one time
-inline double SP::run_one() {
+inline double SP::pack() {
   std::vector<int> distance = spfa(Orientation::Horizontal);
   compute_block_locations(distance, Orientation::Horizontal);
   distance = spfa(Orientation::Vertical);
@@ -589,43 +779,82 @@ inline double SP::run_one() {
 }
 
 
-
 // run SP with SA
 inline void SP::run() {
   double current_temperature = initial_temperature;
  
   // first run
-  double backup_cost = run_one();
+  double backup_cost = pack();
   double cost = backup_cost;
   
   // backup data  
-  std::vector<Block*> backup_positive_sequence = positive_sequence;
-  std::vector<Block*> backup_negative_sequence = negative_sequence;
+  backup_positive_sequence = positive_sequence;
+  backup_negative_sequence = negative_sequence;
   initialize_backup_data(); 
    
-  std::uniform_int_distribution<> distr(0, 1); 
   // SA 
    
+  double delta = 0.0;
+  size_t rv;
+  std::pair<size_t, size_t> pair_idx;
+  
   while (current_temperature > frozen_temperature) {
     for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
-      
-      switch (random_value()%2) {
+   
+      rv = random_value()%4;
+      // neighborhood from four moves   
+      switch (rv) {
         // a new neighbor from move1
         case 0:
-          // move1();
           std::cout << "iteration " << ite << ", temperature : " << current_temperature << ", move 1 chosen" << '\n';
+          pair_idx = move1();
         break;
+
         // a new neighbor from move2 
         case 1:
-          //move2();
           std::cout << "iteration " << ite << ", temperature : " << current_temperature << ", move 2 chosen" << '\n';
+          pair_idx = move2();
         break;
+    
+        // a new neighbor from move3
+        case 2:
+          std::cout << "iteration " << ite << ", temperature : " << current_temperature << ", move 3 chosen" << '\n';
+          pair_idx = move3();
+        break;
+
+        // a new neighbor from move4
+        case 3:
+          std::cout << "iteration " << ite << ", temperature : " << current_temperature << ", move 4 chosen" << '\n';
+          pair_idx = move4();
+        break;
+      }
+
+      cost = pack(); 
+      delta = cost - backup_cost;
+
+      // better neighbor, always accept it
+      if (delta < 0) {
+        //update_backup_data();
+      }
+
+      // worse neighbor
+      else {
+        auto prob = std::exp(-delta/current_temperature);
+
+        // accept the worse neighbor
+        if (prob > static_cast<double>(random_value())/max_dist) { 
+          // update_backup_data()  
+        }
+
+        // decline the worse neighbor
+        else {
+          // resume_backup_data()
+        }
       }
     }
 
     current_temperature *= decay;
   }
-  
 }
 
 
