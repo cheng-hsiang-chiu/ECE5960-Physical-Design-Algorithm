@@ -212,7 +212,7 @@ TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
     sptest.map_blocks["bk5"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
   
     for (auto& [key1, value1] : sptest.map_blocks) {
       for (auto& [key2, value2] : sptest.map_blocks) {
@@ -323,7 +323,7 @@ TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
     sptest.map_blocks["bk2"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
   
     for (auto& [key1, value1] : sptest.map_blocks) {
       for (auto& [key2, value2] : sptest.map_blocks) {
@@ -463,7 +463,7 @@ TEST_CASE("verify_compute_spfa" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
     sptest.map_blocks["bk5"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
   
     std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
 
@@ -512,7 +512,7 @@ TEST_CASE("verify_compute_spfa" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
     sptest.map_blocks["bk2"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
     
     // check horizontal area
     std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
@@ -584,7 +584,7 @@ TEST_CASE("verify_compute_block_locations" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
     sptest.map_blocks["bk5"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
   
     std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
     sptest.compute_block_locations(distance, Orientation::Horizontal);
@@ -632,7 +632,7 @@ TEST_CASE("verify_compute_block_locations" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
     sptest.map_blocks["bk2"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
     
     // check x coordinate
     std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
@@ -702,7 +702,7 @@ TEST_CASE("verify_compute_hpwl" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
     sptest.map_blocks["bk5"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
   
     std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
     sptest.compute_block_locations(distance, Orientation::Horizontal);
@@ -739,7 +739,7 @@ TEST_CASE("verify_compute_hpwl" * doctest::timeout(600)) {
     sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
     sptest.map_blocks["bk2"].idx_negative_sequence = 4;
 
-    sptest.construct_relative_locations();
+    sptest.construct_relative_locations(0, 4);
     
     std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
     sptest.compute_block_locations(distance, Orientation::Horizontal);
@@ -782,7 +782,7 @@ TEST_CASE("verify_backup_data" * doctest::timeout(600)) {
   sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
   sptest.map_blocks["bk2"].idx_negative_sequence = 4;
 
-  sptest.construct_relative_locations();
+  sptest.construct_relative_locations(0, 4);
   
   std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
   sptest.compute_block_locations(distance, Orientation::Horizontal);
@@ -805,6 +805,7 @@ TEST_CASE("verify_backup_data" * doctest::timeout(600)) {
 }
 
 
+/*
 // verify move1
 TEST_CASE("verify_move1" * doctest::timeout(600)) {
   SPTest sptest;
@@ -915,41 +916,166 @@ TEST_CASE("verify_move1" * doctest::timeout(600)) {
     REQUIRE(names.size() == 2);
   }
 }
+*/
+
+
+// verify move1
+TEST_CASE("verify move1" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+  std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+  std::vector<Block*> old_negative_sequence = sptest.negative_sequence; 
+
+  std::pair<size_t, size_t> pair_idx = sptest.move1();
+ 
+  REQUIRE(pair_idx.first < pair_idx.second);
+   
+  for (size_t i = 0; i < sptest.negative_sequence.size(); ++i) {
+    REQUIRE(old_negative_sequence[i] == sptest.negative_sequence[i]);
+  }
+
+  for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
+    REQUIRE(sptest.positive_sequence[pair_idx.first] == 
+            old_positive_sequence[pair_idx.second]);
+  
+    REQUIRE(sptest.positive_sequence[pair_idx.second] == 
+            old_positive_sequence[pair_idx.first]);
+
+    if (i != pair_idx.first && i != pair_idx.second) {
+      REQUIRE(sptest.positive_sequence[i] == 
+              old_positive_sequence[i]);
+    }
+  
+    REQUIRE(sptest.positive_sequence[i]->idx_positive_sequence == i);
+  }
+  //REQUIRE(sptest.positive_sequence[pair_idx.first]->idx_positive_sequence ==
+  //        pair_idx.first);
+  //REQUIRE(sptest.positive_sequence[pair_idx.second]->idx_positive_sequence ==
+  //        pair_idx.second);
+}
 
 
 // verify move2
-TEST_CASE("verify_move2" * doctest::timeout(600)) {
+TEST_CASE("verify move2" * doctest::timeout(600)) {
   SPTest sptest;
   sptest.initialize_sequence();
-  
-  std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
-  std::vector<Block*> old_negative_sequence = sptest.negative_sequence;
-  
-  sptest.move2();
 
-  size_t changes = 0;
+  std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+  std::vector<Block*> old_negative_sequence = sptest.negative_sequence; 
+
+  std::pair<size_t, size_t> pair_idx = sptest.move2();
+
+  REQUIRE(pair_idx.first < pair_idx.second);
+
   for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
-    if (sptest.positive_sequence[i]->width  == old_positive_sequence[i]->width &&
-        sptest.positive_sequence[i]->height == old_positive_sequence[i]->height) {
-      continue;
-    }
-    else {
-      ++changes;
-      REQUIRE(changes == 1);
-    }
+    REQUIRE(old_positive_sequence[i] == sptest.positive_sequence[i]);
   }
 
   for (size_t i = 0; i < sptest.negative_sequence.size(); ++i) {
-    if (sptest.negative_sequence[i]->width  == old_negative_sequence[i]->width &&
-        sptest.negative_sequence[i]->height == old_negative_sequence[i]->height) {
-      continue;
+    REQUIRE(sptest.negative_sequence[pair_idx.first] == 
+            old_negative_sequence[pair_idx.second]);
+  
+    REQUIRE(sptest.negative_sequence[pair_idx.second] == 
+            old_negative_sequence[pair_idx.first]);
+
+    if (i != pair_idx.first && i != pair_idx.second) {
+      REQUIRE(sptest.negative_sequence[i] == 
+              old_negative_sequence[i]);
     }
-    else {
-      ++changes;
-      REQUIRE(changes == 1);
+  
+    REQUIRE(sptest.negative_sequence[i]->idx_negative_sequence == i);
+  }
+  //REQUIRE(sptest.negative_sequence[pair_idx.first]->idx_negative_sequence ==
+  //        pair_idx.first);
+  //REQUIRE(sptest.negative_sequence[pair_idx.second]->idx_negative_sequence ==
+  //        pair_idx.second);
+}
+
+
+// verify move3
+TEST_CASE("verify move3" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+  std::vector<Block*> old_positive_sequence = sptest.positive_sequence;
+  std::vector<Block*> old_negative_sequence = sptest.negative_sequence; 
+
+  std::pair<size_t, size_t> pair_idx = sptest.move3();
+  REQUIRE(pair_idx.first < pair_idx.second);
+
+  for (size_t i = 0; i < sptest.positive_sequence.size(); ++i) {
+    if (i != pair_idx.first && i != pair_idx.second) {
+      REQUIRE(old_positive_sequence[i] == sptest.positive_sequence[i]);
     }
+    
+    REQUIRE(sptest.positive_sequence[pair_idx.first] == 
+            old_positive_sequence[pair_idx.second]);
+  
+    REQUIRE(sptest.positive_sequence[pair_idx.second] == 
+            old_positive_sequence[pair_idx.first]);
+  
+    REQUIRE(sptest.positive_sequence[i]->idx_positive_sequence == i);
+  }
+  
+
+  size_t old_negative_id1 = old_positive_sequence[pair_idx.first]->idx_negative_sequence;
+  size_t old_negative_id2 = old_positive_sequence[pair_idx.second]->idx_negative_sequence;
+  for (size_t i = 0; i < sptest.negative_sequence.size(); ++i) {
+    if (i != old_negative_id1 && i != old_negative_id2) { 
+      REQUIRE(sptest.negative_sequence[i] == 
+              old_negative_sequence[i]);
+    }
+    REQUIRE(sptest.negative_sequence[old_negative_id1] == 
+            old_negative_sequence[old_negative_id2]);
+  
+    REQUIRE(sptest.negative_sequence[old_negative_id2] == 
+            old_negative_sequence[old_negative_id1]);
+    
+    REQUIRE(sptest.negative_sequence[i]->idx_negative_sequence == i);
   }
 }
+
+
+// verify move4
+TEST_CASE("verify move4" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+
+  std::vector<std::pair<size_t, size_t>> old_positive_sequence;
+  std::vector<std::pair<size_t, size_t>> old_negative_sequence; 
+
+  for (auto& ps : sptest.positive_sequence) {
+    old_positive_sequence.push_back(std::make_pair(ps->width, ps->height));
+  }
+
+  for (auto& ns : sptest.negative_sequence) {
+    old_negative_sequence.push_back(std::make_pair(ns->width, ns->height));
+  }
+
+  sptest.move4();
+
+  size_t changes = 0;
+  
+  for (size_t i = 0; i < old_positive_sequence.size(); ++i) {
+    if (old_positive_sequence[i].first == sptest.positive_sequence[i]->width &&
+        old_positive_sequence[i].second == sptest.positive_sequence[i]->height) {
+      continue;
+    }
+    ++changes;
+  }
+  REQUIRE(changes == 1);
+
+  for (size_t i = 0; i < old_negative_sequence.size(); ++i) {
+    if (old_negative_sequence[i].first == sptest.negative_sequence[i]->width &&
+        old_negative_sequence[i].second == sptest.negative_sequence[i]->height) {
+      continue;
+    }
+    ++changes;
+  }
+  REQUIRE(changes == 2);
+}
+
 
 
 
