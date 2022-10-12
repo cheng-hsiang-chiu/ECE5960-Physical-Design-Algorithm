@@ -37,6 +37,7 @@
  *   bk3
  *   bk4
  *
+ * alpha = 0.6
  */
 
 namespace fp {
@@ -46,6 +47,8 @@ namespace fp {
 class SPTest : public SP {
 public:
   SPTest() {
+    alpha = 0.6;
+
     Block b1;
     Block b2;
     Block b3;
@@ -1536,6 +1539,661 @@ TEST_CASE("verify_relative_locations" * doctest::timeout(600)) {
       }
     }
   }
+  
+  SUBCASE("SUB : case 2 with move3") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations(0, 4, MoveType::nomove);
+    auto pair_idx = sptest.move3();
+    std::cout << "pair_idx = " << pair_idx.first << "," << pair_idx.second << '\n';
+
+    sptest.construct_relative_locations(
+      pair_idx.first,
+      pair_idx.second,
+      MoveType::move3
+    );
+   
+    REQUIRE(sptest.source.rightof.size() == 5);
+    REQUIRE(sptest.source.aboveof.size() == 5);
+
+    if (pair_idx.first == 0 && pair_idx.second == 1) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk2");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 0 && pair_idx.second == 2) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk2");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk2");
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk1");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 0 && pair_idx.second == 3) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk2");
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk4");
+            REQUIRE(blk->name != "bk5");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != " bk4");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != " bk4");
+            REQUIRE(blk->name != " bk5");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 0 && pair_idx.second == 4) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk1");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk2");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 1 && pair_idx.second == 2) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk2");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+       
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+  
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk3");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 1 && pair_idx.second == 3) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk2");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+   
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != " bk1");
+            REQUIRE(blk->name != " bk4");
+            REQUIRE(blk->name != " bk5");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 1 && pair_idx.second == 4) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk3");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk3");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else if (key == "bk4") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk2");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 2 && pair_idx.second == 3) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk5");
+        }
+
+        else if (key == "bk3") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk4");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 2 && pair_idx.second == 4) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk2");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk2");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+
+        else if (key == "bk3") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk2");
+            REQUIRE(blk->name != "bk3");
+          }
+          REQUIRE(value.rightof.size());
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+        
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+          
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk4");
+        }
+      }
+    }
+
+    else if (pair_idx.first == 3 && pair_idx.second == 4) {
+      for (auto& [key, value] : sptest.map_blocks) {
+        if (key == "bk1") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk5");
+          }
+          REQUIRE(value.rightof.size() == 4);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk2") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk3") {
+          for (auto& blk : value.rightof) {
+            REQUIRE(blk->name != "bk1");
+            REQUIRE(blk->name != "bk3");
+            REQUIRE(blk->name != "bk5");
+          }
+          REQUIRE(value.rightof.size() == 3);
+
+          REQUIRE(value.aboveof.size() == 1);
+          REQUIRE(value.aboveof[0]->name == "terminus");
+        }
+
+        else if (key == "bk4") {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          REQUIRE(value.aboveof.size() == 2);
+          REQUIRE(value.aboveof[0]->name == "bk2");
+        }
+
+        else {
+          REQUIRE(value.rightof.size() == 1);
+          REQUIRE(value.rightof[0]->name == "terminus");
+
+          for (auto& blk : value.aboveof) {
+            REQUIRE(blk->name != "bk5");
+          }
+          REQUIRE(value.aboveof.size() == 5);
+        }
+      }
+    }
+  }
+  
+  SUBCASE("SUB : case 2 with move4") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations(0, 4, MoveType::nomove);
+    auto pair_idx = sptest.move4();
+    std::cout << "pair_idx = " << pair_idx.first << "," << pair_idx.second << '\n';
+
+    sptest.construct_relative_locations(
+      pair_idx.first,
+      pair_idx.second,
+      MoveType::move4
+    );
+   
+    REQUIRE(sptest.source.rightof.size() == 5);
+    REQUIRE(sptest.source.aboveof.size() == 5);
+
+    for (auto& [key, value] : sptest.map_blocks) {
+      if (key == "bk1") {
+        for (auto& blk : value.rightof) {
+          REQUIRE(blk->name != "bk1");
+          REQUIRE(blk->name != "bk4");
+        }
+        REQUIRE(value.rightof.size() == 4);
+
+        REQUIRE(value.aboveof.size() == 1);
+        REQUIRE(value.aboveof[0]->name == "terminus");
+      }
+
+      else if (key == "bk2") {
+        REQUIRE(value.rightof.size() == 1);
+        REQUIRE(value.rightof[0]->name == "terminus");
+
+        REQUIRE(value.aboveof.size() == 1);
+        REQUIRE(value.aboveof[0]->name == "terminus");
+      }
+
+      else if (key == "bk3") {
+        for (auto& blk : value.rightof) {
+          REQUIRE(blk->name != "bk1");
+          REQUIRE(blk->name != "bk3");
+          REQUIRE(blk->name != "bk4");
+        }
+        REQUIRE(value.rightof.size() == 3);
+
+        REQUIRE(value.aboveof.size() == 1);
+        REQUIRE(value.aboveof[0]->name == "terminus");
+      }
+
+      else if (key == "bk4") {
+        REQUIRE(value.rightof.size() == 1);
+        REQUIRE(value.rightof[0]->name == "terminus");
+        
+        for (auto& blk : value.aboveof) {
+          REQUIRE(blk->name != "bk4"); 
+        }
+        REQUIRE(value.aboveof.size() == 5);
+      }
+
+      else {
+        REQUIRE(value.rightof.size() == 1);
+        REQUIRE(value.rightof[0]->name == "terminus");
+
+        REQUIRE(value.aboveof.size() == 2);
+        REQUIRE(value.aboveof[0]->name == "bk2");
+      }
+    }
+  }
 }
 
 
@@ -2537,6 +3195,327 @@ TEST_CASE("verify update_backup_data" * doctest::timeout(600)) {
         sptest.positive_sequence[i]->aboveof ==
         sptest.positive_sequence[i]->backup_aboveof);
     }
+  }
+}
+
+
+// verify resume_backup_data
+TEST_CASE("verify_resume_backup_data" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+  
+  // positive sequence = [bk1, bk3, bk2, bk5, bk4]
+  // negative sequence = [bk4, bk1, bk3, bk5, bk2]
+  sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+  sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+  sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+  sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+  sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+  sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+  sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+  sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+  sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+  sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+  
+  sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+  sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+  sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+  sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+  sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+  sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+  sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+  sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+  sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+  sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+  sptest.construct_relative_locations(0, 4, MoveType::nomove);
+  
+  std::vector<int> distance = sptest.spfa(Orientation::Horizontal);
+  sptest.compute_block_locations(distance, Orientation::Horizontal);
+
+  distance = sptest.spfa(Orientation::Vertical);
+  sptest.compute_block_locations(distance, Orientation::Vertical);
+  
+  sptest.compute_hpwl();
+
+  sptest.initialize_backup_data();
+
+  SUBCASE("SUB : resume after move1") {
+    std::pair<size_t, size_t> pair_idx = sptest.move1();
+    sptest.resume_backup_data(pair_idx.first, pair_idx.second, MoveType::move1);
+
+    for (size_t i = 0; i < sptest.num_blocks; ++i) {
+      REQUIRE(
+        sptest.positive_sequence[i] ==
+        sptest.backup_positive_sequence[i]);
+      REQUIRE(
+        sptest.negative_sequence[i] ==
+        sptest.backup_negative_sequence[i]);
+
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence == i);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->width ==
+        sptest.positive_sequence[i]->backup_width);
+      REQUIRE(
+        sptest.positive_sequence[i]->height ==
+        sptest.positive_sequence[i]->backup_height);
+    
+      REQUIRE(
+        sptest.positive_sequence[i]->rightof ==
+        sptest.positive_sequence[i]->backup_rightof);
+      REQUIRE(
+        sptest.positive_sequence[i]->aboveof ==
+        sptest.positive_sequence[i]->backup_aboveof);
+    }
+  }
+  
+  SUBCASE("SUB : resume after move2") {
+    std::pair<size_t, size_t> pair_idx = sptest.move2();
+    sptest.resume_backup_data(pair_idx.first, pair_idx.second, MoveType::move2);
+
+    for (size_t i = 0; i < sptest.num_blocks; ++i) {
+      REQUIRE(
+        sptest.positive_sequence[i] ==
+        sptest.backup_positive_sequence[i]);
+      REQUIRE(
+        sptest.negative_sequence[i] ==
+        sptest.backup_negative_sequence[i]);
+
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence == i);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->width ==
+        sptest.positive_sequence[i]->backup_width);
+      REQUIRE(
+        sptest.positive_sequence[i]->height ==
+        sptest.positive_sequence[i]->backup_height);
+    
+      REQUIRE(
+        sptest.positive_sequence[i]->rightof ==
+        sptest.positive_sequence[i]->backup_rightof);
+      REQUIRE(
+        sptest.positive_sequence[i]->aboveof ==
+        sptest.positive_sequence[i]->backup_aboveof);
+    }
+  }
+  
+  SUBCASE("SUB : resume after move3") {
+    std::pair<size_t, size_t> pair_idx = sptest.move3();
+    sptest.resume_backup_data(pair_idx.first, pair_idx.second, MoveType::move3);
+
+    for (size_t i = 0; i < sptest.num_blocks; ++i) {
+      REQUIRE(
+        sptest.positive_sequence[i] ==
+        sptest.backup_positive_sequence[i]);
+      REQUIRE(
+        sptest.negative_sequence[i] ==
+        sptest.backup_negative_sequence[i]);
+
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence == i);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->width ==
+        sptest.positive_sequence[i]->backup_width);
+      REQUIRE(
+        sptest.positive_sequence[i]->height ==
+        sptest.positive_sequence[i]->backup_height);
+    
+      REQUIRE(
+        sptest.positive_sequence[i]->rightof ==
+        sptest.positive_sequence[i]->backup_rightof);
+      REQUIRE(
+        sptest.positive_sequence[i]->aboveof ==
+        sptest.positive_sequence[i]->backup_aboveof);
+    }
+  }
+  
+  SUBCASE("SUB : resume after move4") {
+    std::pair<size_t, size_t> pair_idx = sptest.move4();
+    sptest.resume_backup_data(pair_idx.first, pair_idx.second, MoveType::move4);
+
+    for (size_t i = 0; i < sptest.num_blocks; ++i) {
+      REQUIRE(
+        sptest.positive_sequence[i] ==
+        sptest.backup_positive_sequence[i]);
+      REQUIRE(
+        sptest.negative_sequence[i] ==
+        sptest.backup_negative_sequence[i]);
+
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence == i);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->idx_positive_sequence);
+      REQUIRE(
+        sptest.positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_positive_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_positive_sequence);
+      REQUIRE(
+        sptest.backup_positive_sequence[i]->idx_negative_sequence ==
+        sptest.backup_positive_sequence[i]->backup_idx_negative_sequence);
+      
+      REQUIRE(
+        sptest.positive_sequence[i]->width ==
+        sptest.positive_sequence[i]->backup_width);
+      REQUIRE(
+        sptest.positive_sequence[i]->height ==
+        sptest.positive_sequence[i]->backup_height);
+    
+      REQUIRE(
+        sptest.positive_sequence[i]->rightof ==
+        sptest.positive_sequence[i]->backup_rightof);
+      REQUIRE(
+        sptest.positive_sequence[i]->aboveof ==
+        sptest.positive_sequence[i]->backup_aboveof);
+    }
+  }
+}
+
+
+// verify pack
+TEST_CASE("verify_pack" * doctest::timeout(600)) {
+  SPTest sptest;
+  sptest.initialize_sequence();
+  
+  // positive sequence = [bk1, bk2, bk3, bk4, bk5]
+  // negative sequence = [bk1, bk2, bk3, bk4, bk5]
+  SUBCASE("SUB : case 1") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations(0, 4, MoveType::nomove);
+
+    double cost = sptest.pack();
+    REQUIRE(cost == 648600); 
+
+    auto pair_idx = sptest.move1();
+
+  }
+  
+  SUBCASE("SUB : case 2") { 
+    sptest.positive_sequence[0] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_positive_sequence = 0;
+    sptest.positive_sequence[1] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_positive_sequence = 1;
+    sptest.positive_sequence[2] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_positive_sequence = 2;
+    sptest.positive_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_positive_sequence = 3;
+    sptest.positive_sequence[4] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_positive_sequence = 4;
+    
+    sptest.negative_sequence[0] = &(sptest.map_blocks["bk4"]);
+    sptest.map_blocks["bk4"].idx_negative_sequence = 0;
+    sptest.negative_sequence[1] = &(sptest.map_blocks["bk1"]);
+    sptest.map_blocks["bk1"].idx_negative_sequence = 1;
+    sptest.negative_sequence[2] = &(sptest.map_blocks["bk3"]);
+    sptest.map_blocks["bk3"].idx_negative_sequence = 2;
+    sptest.negative_sequence[3] = &(sptest.map_blocks["bk5"]);
+    sptest.map_blocks["bk5"].idx_negative_sequence = 3;
+    sptest.negative_sequence[4] = &(sptest.map_blocks["bk2"]);
+    sptest.map_blocks["bk2"].idx_negative_sequence = 4;
+
+    sptest.construct_relative_locations(0, 4, MoveType::nomove);
+    
+    double cost = sptest.pack();
+    REQUIRE(cost == 1008680); 
   }
 }
 
