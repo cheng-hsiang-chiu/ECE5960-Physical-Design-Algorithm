@@ -87,7 +87,7 @@ enum MoveType {
 class SP {
 public:
 
-  std::vector<double> allcost;
+  //std::vector<double> allcost;
 
 
   std::unordered_map<std::string, Block> map_blocks;
@@ -114,7 +114,7 @@ public:
 
   const double decay = 0.95; 
     
-  const size_t iterations_per_temperature = 2000;
+  const size_t iterations_per_temperature = 3000;
  
   // source and terminus blocks for horizontal/vertical constraint graph
   Block source;
@@ -123,14 +123,22 @@ public:
   // bounding box width and height and its backups
   int bb_width = 0;
   int bb_height = 0;
+  int hpwl = 0;
   int backup_bb_width = 0;
   int backup_bb_height = 0; 
+  int backup_hpwl = 0;
 
+  double average_area = 0.0;
+  double average_length = 0.0;
+  size_t num_iterations = 0;
+  
   SP() = default;
 
   SP(double, const std::string&, const std::string&, const std::string&);
 
   void dump(std::ostream&) const;
+
+  void dump_backup(std::ostream&) const;
 
   void visualize() const;
 
@@ -503,8 +511,11 @@ inline std::vector<int> SP::spfa(const Orientation orientation) {
     Block* u = Q.front();
     Q.pop_front();
   
-    std::vector<Block*> vec = u->rightof; 
-    if (orientation == Orientation::Vertical) {
+    std::vector<Block*> vec; 
+    if(orientation == Orientation::Horizontal) {
+      vec = u->rightof;
+    }
+    else {
       vec = u->aboveof;
     }
 
@@ -739,6 +750,7 @@ inline void SP::initialize_backup_data() {
 
   backup_bb_width = bb_width;
   backup_bb_height = bb_height;
+  backup_hpwl = hpwl;
   backup_positive_sequence = positive_sequence;
   backup_negative_sequence = negative_sequence;
 }
@@ -755,17 +767,29 @@ inline void SP::update_backup_data(
       std::swap(backup_positive_sequence[id1], backup_positive_sequence[id2]);
       positive_sequence[id1]->backup_idx_positive_sequence = id1;
       positive_sequence[id2]->backup_idx_positive_sequence = id2;
+     
+      //assert(positive_sequence[id1]->idx_positive_sequence == positive_sequence[id1]->backup_positive_sequence);
+      //assert(positive_sequence[id2]->idx_positive_sequence == positive_sequence[id2]->backup_positive_sequence);
       
       for (size_t i = id1; i <= id2; ++i) {
         backup_positive_sequence[i]->backup_rightof = 
           positive_sequence[i]->rightof;
         backup_positive_sequence[i]->backup_aboveof = 
           positive_sequence[i]->aboveof;
-        backup_positive_sequence[i]->backup_lower_left_x =
-          positive_sequence[i]->lower_left_x;
-        backup_positive_sequence[i]->backup_lower_left_y =
-          positive_sequence[i]->lower_left_y;
+        //backup_positive_sequence[i]->backup_lower_left_x =
+        //  positive_sequence[i]->lower_left_x;
+        //backup_positive_sequence[i]->backup_lower_left_y =
+        //  positive_sequence[i]->lower_left_y;
       }
+
+      for (auto& [key, value] : map_blocks) {
+        value.backup_lower_left_x = value.lower_left_x;
+        value.backup_lower_left_y = value.lower_left_y;
+      }
+
+      assert(backup_positive_sequence[id1] == positive_sequence[id1]);
+      assert(backup_positive_sequence[id2] == positive_sequence[id2]);
+
     break;
     
     case 2:
@@ -777,11 +801,19 @@ inline void SP::update_backup_data(
           negative_sequence[i]->rightof;
         backup_negative_sequence[i]->backup_aboveof = 
           negative_sequence[i]->aboveof;
-        backup_negative_sequence[i]->backup_lower_left_x =
-          negative_sequence[i]->lower_left_x;
-        backup_negative_sequence[i]->backup_lower_left_y =
-          negative_sequence[i]->lower_left_y;
+        //backup_negative_sequence[i]->backup_lower_left_x =
+        //  negative_sequence[i]->lower_left_x;
+        //backup_negative_sequence[i]->backup_lower_left_y =
+        //  negative_sequence[i]->lower_left_y;
       }
+      
+      for (auto& [key, value] : map_blocks) {
+        value.backup_lower_left_x = value.lower_left_x;
+        value.backup_lower_left_y = value.lower_left_y;
+      }
+      assert(backup_negative_sequence[id1] == negative_sequence[id1]);
+      assert(backup_negative_sequence[id2] == negative_sequence[id2]);
+   
     break;
 
     case 3:
@@ -793,10 +825,10 @@ inline void SP::update_backup_data(
           positive_sequence[i]->rightof;
         backup_positive_sequence[i]->backup_aboveof =
           positive_sequence[i]->aboveof;
-        backup_positive_sequence[i]->backup_lower_left_x =
-          positive_sequence[i]->lower_left_x;
-        backup_positive_sequence[i]->backup_lower_left_y =
-          positive_sequence[i]->lower_left_y;
+        //backup_positive_sequence[i]->backup_lower_left_x =
+        //  positive_sequence[i]->lower_left_x;
+        //backup_positive_sequence[i]->backup_lower_left_y =
+        //  positive_sequence[i]->lower_left_y;
       }
 
       
@@ -815,11 +847,20 @@ inline void SP::update_backup_data(
           negative_sequence[i]->rightof;
         backup_negative_sequence[i]->backup_aboveof = 
           negative_sequence[i]->aboveof;
-        backup_negative_sequence[i]->backup_lower_left_x =
-          negative_sequence[i]->lower_left_x;
-        backup_negative_sequence[i]->backup_lower_left_y =
-          negative_sequence[i]->lower_left_y;
+        //backup_negative_sequence[i]->backup_lower_left_x =
+        //  negative_sequence[i]->lower_left_x;
+        //backup_negative_sequence[i]->backup_lower_left_y =
+        //  negative_sequence[i]->lower_left_y;
       }
+      
+      for (auto& [key, value] : map_blocks) {
+        value.backup_lower_left_x = value.lower_left_x;
+        value.backup_lower_left_y = value.lower_left_y;
+      }
+      assert(backup_positive_sequence[id1] == positive_sequence[id1]);
+      assert(backup_negative_sequence[id1] == negative_sequence[id1]);
+      assert(backup_positive_sequence[id2] == positive_sequence[id2]);
+      assert(backup_negative_sequence[id2] == negative_sequence[id2]);
     
     break;
 
@@ -838,6 +879,7 @@ inline void SP::update_backup_data(
 
   backup_bb_width  = bb_width;
   backup_bb_height = bb_height;
+  backup_hpwl = hpwl;
 }
 
 
@@ -864,11 +906,16 @@ inline void SP::resume_backup_data(
         positive_sequence[i]->aboveof = 
         positive_sequence[i]->backup_aboveof;
          
-        positive_sequence[i]->lower_left_x = 
-        positive_sequence[i]->backup_lower_left_x;
+        //positive_sequence[i]->lower_left_x = 
+        //positive_sequence[i]->backup_lower_left_x;
 
-        positive_sequence[i]->lower_left_y = 
-        positive_sequence[i]->backup_lower_left_y;
+        //positive_sequence[i]->lower_left_y = 
+        //positive_sequence[i]->backup_lower_left_y;
+      }
+
+      for (auto& [key, value] : map_blocks) {
+        value.lower_left_x = value.backup_lower_left_x;
+        value.lower_left_y = value.backup_lower_left_y;
       }
     break;
     
@@ -888,11 +935,15 @@ inline void SP::resume_backup_data(
         negative_sequence[i]->aboveof = 
         negative_sequence[i]->backup_aboveof;
      
-        negative_sequence[i]->lower_left_x = 
-        negative_sequence[i]->backup_lower_left_x; 
+        //negative_sequence[i]->lower_left_x = 
+        //negative_sequence[i]->backup_lower_left_x; 
       
-        negative_sequence[i]->lower_left_y = 
-        negative_sequence[i]->backup_lower_left_y; 
+        //negative_sequence[i]->lower_left_y = 
+        //negative_sequence[i]->backup_lower_left_y; 
+      }
+      for (auto& [key, value] : map_blocks) {
+        value.lower_left_x = value.backup_lower_left_x;
+        value.lower_left_y = value.backup_lower_left_y;
       }
     break;
 
@@ -912,11 +963,11 @@ inline void SP::resume_backup_data(
         positive_sequence[i]->aboveof = 
         positive_sequence[i]->backup_aboveof;
         
-        positive_sequence[i]->lower_left_x = 
-        positive_sequence[i]->backup_lower_left_x;
-        
-        positive_sequence[i]->lower_left_y = 
-        positive_sequence[i]->backup_lower_left_y;
+        //positive_sequence[i]->lower_left_x = 
+        //positive_sequence[i]->backup_lower_left_x;
+        //
+        //positive_sequence[i]->lower_left_y = 
+        //positive_sequence[i]->backup_lower_left_y;
       }
 
       
@@ -941,11 +992,15 @@ inline void SP::resume_backup_data(
         negative_sequence[i]->aboveof = 
         negative_sequence[i]->backup_aboveof;
 
-        negative_sequence[i]->lower_left_x = 
-        negative_sequence[i]->backup_lower_left_x;
+        //negative_sequence[i]->lower_left_x = 
+        //negative_sequence[i]->backup_lower_left_x;
 
-        negative_sequence[i]->lower_left_y = 
-        negative_sequence[i]->backup_lower_left_y;
+        //negative_sequence[i]->lower_left_y = 
+        //negative_sequence[i]->backup_lower_left_y;
+      }
+      for (auto& [key, value] : map_blocks) {
+        value.lower_left_x = value.backup_lower_left_x;
+        value.lower_left_y = value.backup_lower_left_y;
       }
     
     break;
@@ -965,6 +1020,7 @@ inline void SP::resume_backup_data(
   }
   bb_width  = backup_bb_width;
   bb_height = backup_bb_height;
+  hpwl = backup_hpwl;
 }
 
 
@@ -991,14 +1047,21 @@ inline double SP::pack() {
   //std::cout << "after second compute_area-------------\n";
   //dump(std::cout); 
   
-  int hpwl = compute_hpwl();
+  hpwl = compute_hpwl();
   //std::cout << "after compute_hpwl-------------\n";
   //dump(std::cout); 
   
+  average_area = 
+    (average_area*(num_iterations-1) + bb_width*bb_height)/static_cast<double>(num_iterations);
+  
+  average_length = 
+    (average_length*(num_iterations-1) + hpwl)/static_cast<double>(num_iterations); 
   //std::cout << "hpwl = " << hpwl << '\n';
   //std::cout << alpha*bb_width*bb_height + (1-alpha) * hpwl << '\n'; 
   
-  return alpha*bb_width*bb_height + (1-alpha) * hpwl; 
+
+  return (alpha*bb_width*bb_height/average_area)+(1-alpha)*hpwl/average_length;
+  //return alpha*bb_width*bb_height + (1-alpha) * hpwl; 
   //return alpha*bb_width*bb_height; 
 }
 
@@ -1009,16 +1072,18 @@ inline void SP::run() {
   //std::cout << "before first pack------\n";
   //dump(std::cout); 
   // first run
+  ++num_iterations;
   double backup_cost = pack();
   double cost = backup_cost;
  
-  allcost.push_back(cost); 
+  //allcost.push_back(cost); 
   // backup data  
   //std::cout << "before initialize_backup_data\n\n";
   //dump(std::cout); 
   initialize_backup_data(); 
   //std::cout << "after initialize_backup_data\n\n";
   //dump(std::cout); 
+  //dump_backup(std::cout);
   
   //std::cout << "what the hell\n\n\n\n";
   // SA 
@@ -1029,7 +1094,13 @@ inline void SP::run() {
   
   while (current_temperature > frozen_temperature) {
     for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
-   
+      if ((outline_width >= bb_width && outline_height >= bb_height) ||
+          (outline_width >= bb_height && outline_height >= bb_width)) {
+        std::cout << "Found\n";
+        dump(std::cout); 
+        return;  
+      }
+
       rv = random_value()%4;
       // neighborhood from four moves   
       switch (rv) {
@@ -1063,14 +1134,20 @@ inline void SP::run() {
       }
 
       construct_relative_locations(pair_idx.first, pair_idx.second, move_type);
+      ++num_iterations;
       cost = pack(); 
-      delta = cost - backup_cost;
+      delta = (cost - backup_cost)*1000;
+      //std::cout << "cost = " << cost << ", delta = " << delta << '\n';
       //allcost.push_back(cost);
       // better neighbor, always accept it
       if (delta < 0) {
         update_backup_data(pair_idx.first, pair_idx.second, move_type);
         backup_cost = cost;
-        allcost.push_back(cost);
+        //allcost.push_back(cost);
+        //std::cout << "\n\n\naccept\n\n\n";
+        //dump(std::cout); 
+        //dump_backup(std::cout);
+        //return;
       }
 
       // worse neighbor
@@ -1081,12 +1158,24 @@ inline void SP::run() {
         if (prob > static_cast<double>(random_value())/max_dist) { 
           update_backup_data(pair_idx.first, pair_idx.second, move_type);  
           backup_cost = cost;
-          allcost.push_back(cost);
+          //allcost.push_back(cost);
+          //std::cout << "accept\n";
+          //dump(std::cout); 
+          //dump_backup(std::cout);
+          //return;
         }
 
         // decline the worse neighbor
         else {
+          average_area = (average_area*num_iterations-bb_width*bb_height)/(num_iterations-1);
+          average_length = (average_length*num_iterations-hpwl)/(num_iterations-1);
+          --num_iterations;
+
           resume_backup_data(pair_idx.first, pair_idx.second, move_type);
+          //std::cout << "deny\n";
+          //dump(std::cout); 
+          //dump_backup(std::cout);
+          //return;
         }
       }
     }
@@ -1204,7 +1293,92 @@ inline void SP::visualize() const {
 }
 
 
+// dump backup SP data structure
+inline void SP::dump_backup(std::ostream& os) const {
+  os << "outline width = " << outline_width 
+     << ", outline height = " << outline_height
+     << ", num_blocks = " << num_blocks
+     << ", num_terminals = " << num_terminals << '\n';
 
+  for (auto& [key, value] : map_blocks) {
+    assert(key == value.name);
+    os << "Block " << value.name
+       << " has width : " << value.backup_width
+       << ", height : "   << value.backup_height
+       << ", lf.x : "     << value.backup_lower_left_x
+       << ", lf.y : "     << value.backup_lower_left_y
+       << ", ur.x : "     << (value.backup_lower_left_x + value.backup_width)
+       << ", ur.y : "     << (value.backup_lower_left_y + value.backup_height)
+       << '\n';
+    assert(value.backup_width == value.width);
+    assert(value.backup_height == value.height);
+    assert(value.backup_lower_left_x == value.lower_left_x);
+    assert(value.backup_lower_left_y == value.lower_left_y);
+    assert(value.backup_idx_positive_sequence == value.idx_positive_sequence);
+    assert(value.backup_idx_negative_sequence == value.idx_negative_sequence);
+  }
+  
+  //for (auto& [key, value] : map_terminals) {
+  //  assert(key == value.name);
+  //  os << "Terminal " << value.name
+  //     << " at x : "  << value.pos_x
+  //     << ", y : "    << value.pos_y
+  //     << '\n';
+  //}
+
+  //for (auto& vec : vec_nets) {
+  //  os << "Net : ";
+  //  for (auto& v : vec.net) {
+  //    if (std::holds_alternative<Block*>(v)) {
+  //      os << (std::get<Block*>(v))->name    << "(b) ";
+  //    }
+  //    else {
+  //      os << (std::get<Terminal*>(v))->name << "(t) ";
+  //    }
+  //  }
+  //  os << '\n';
+  //}
+
+  assert(positive_sequence == backup_positive_sequence);
+  os << "Backup positive sequence : ";
+  for (auto& ps : backup_positive_sequence) {
+    os << ps->name << ' '; 
+  }
+  os << '\n';
+  
+  assert(negative_sequence == backup_negative_sequence);
+  os << "Backup negative sequence : ";
+  for (auto& ns : backup_negative_sequence) {
+    os << ns->name << ' '; 
+  }
+  os << '\n';
+
+  os << "Backup relative Locations : \n";
+  for (auto& [key, value] : map_blocks) {
+    os << key << ".backup_rightof = [";
+    assert(value.backup_rightof == value.rightof);
+    for (auto& v : value.backup_rightof) {
+      os << v->name << ", ";
+    }
+    os << "]\n";
+  }
+  
+  for (auto& [key, value] : map_blocks) {
+    os << key << ".backup_aboveof = [";
+    assert(value.backup_aboveof == value.aboveof);
+    for (auto& v : value.backup_aboveof) {
+      os << v->name << ", ";
+    }
+    os << "]\n";
+  }
+
+  os << "Area = " << backup_bb_width 
+     << " * "     << backup_bb_height
+     << " = "     << backup_bb_width * backup_bb_height << '\n'; 
+  assert(backup_bb_width == bb_width);
+  assert(backup_bb_height == bb_height);
+  //visualize();
+}
 
 
 
