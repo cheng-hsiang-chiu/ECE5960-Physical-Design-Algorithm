@@ -7,7 +7,7 @@ do
   echo "---------------------------------"
   echo "-----------  "$i"   -------------"
   echo "---------------------------------"
-  ./fp 0.6 "../benchmarks/"$i".block" "../benchmarks/"$i".nets" "./"$1".out"
+  time ./fp 0.6 "../benchmarks/"$i".block" "../benchmarks/"$i".nets" "./"$1".out"
 done
 
 #for i in {0..6}
