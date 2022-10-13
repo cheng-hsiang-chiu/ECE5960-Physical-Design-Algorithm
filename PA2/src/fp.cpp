@@ -18,6 +18,6 @@ int main(int argc, char** argv) {
 
   fp::SP sp(alpha, input_block_path, input_net_path, output_path);
   sp.run();
-
+  sp.dump_solution();
   return 0;
 }
