@@ -8,9 +8,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: build
+    - name: build PA1
       run: cd PA1 ; mkdir build ; cd build ; cmake ../ ; make 
-    - name: test benchmarks
+    - name: test PA1 benchmarks
       run: cd PA1/build ; ./run.sh
-    - name: test unittest
+    - name: test PA1 unittest
       run: cd PA1/build ;  make test
+    - name: build PA2
+      run: cd PA2 ; mkdir build ; cd build ; cmake ../ ; make 
+    - name: test input_PA2
+      run: cd PA2/build ; ./run.sh
+    - name: test PA2 unittest
+      run: cd PA2/build ;  make test
