@@ -2,7 +2,7 @@
 import sys
 import numpy as np
 
-with open("input_pa2/"+sys.argv[1]+".block", 'r') as f:
+with open("../input_pa2/"+sys.argv[1]+".block", 'r') as f:
   tmp = f.readline().split()
   width = int(tmp[1])
   height = int(tmp[2])
@@ -21,7 +21,7 @@ with open("input_pa2/"+sys.argv[1]+".block", 'r') as f:
     if len(tmp) == 0: continue
     terminals.append([tmp[0], int(tmp[2]), int(tmp[3])])
 
-with open("input_pa2/"+sys.argv[1]+".nets", 'r') as f:
+with open("../input_pa2/"+sys.argv[1]+".nets", 'r') as f:
   num_nets = int(f.readline().split()[1])
   nets = []
   for i in range(num_nets):
