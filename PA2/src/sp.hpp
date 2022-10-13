@@ -131,6 +131,10 @@ public:
   double average_area = 0.0;
   double average_length = 0.0;
   size_t num_iterations = 0;
+
+  int overshoot_length = 0;
+ 
+  std::string output_path;
   
   SP() = default;
 
@@ -164,7 +168,7 @@ public:
   
   void compute_block_locations(std::vector<int>&, const Orientation);
 
-  void compute_area(const std::vector<int>&, int&);
+  void compute_area(const std::vector<int>&, int&, const Orientation);
 
   int compute_hpwl() const;
 
@@ -173,13 +177,16 @@ public:
   void update_backup_data(const size_t, const size_t, const MoveType);
 
   void resume_backup_data(const size_t, const size_t, const MoveType);
+
+  void dump_solution() const; 
 };
 
 
 inline SP::SP(double a, const std::string& input_block_path, 
               const std::string& input_net_path,
-              const std::string& output_path) {
+              const std::string& out_path) {
 
+  output_path = out_path;
   source.name = "source";
   terminus.name = "terminus";
 
@@ -566,9 +573,10 @@ inline std::vector<int> SP::spfa(const Orientation orientation) {
 }
 
 
+/*
 // compute HPWL
 inline int SP::compute_hpwl() const {
-  int hpwl = 0;
+  int tmp_hpwl = 0;
   for (auto& net : vec_nets) {
     std::vector<Terminal*> terminals;
 
@@ -598,20 +606,64 @@ inline int SP::compute_hpwl() const {
       }
     }
 
-    hpwl = hpwl + (max_x-min_x) + (max_y-min_y);
+    tmp_hpwl = tmp_hpwl + (max_x-min_x) + (max_y-min_y);
     
     // length to terminals
     int center_x = (max_x + min_x)/2;
     int center_y = (max_y + min_y)/2;
     for (auto& t : terminals) {
-      hpwl = hpwl + 
+      tmp_hpwl = tmp_hpwl + 
              std::abs(center_x-static_cast<int>(t->pos_x)) + 
              std::abs(center_y-static_cast<int>(t->pos_y));  
     }
   }
   
-  return hpwl;
+  return tmp_hpwl;
 }
+*/
+
+inline int SP::compute_hpwl() const {
+  int tmp_hpwl = 0;
+  for (auto& net : vec_nets) {
+
+    int max_x = 0, min_x = INT_MAX, max_y = 0, min_y = INT_MAX;
+    int llx = 0, lly = 0;
+    for (auto& n : net.net) {
+      // terminal in a net
+      if (std::holds_alternative<Terminal*>(n)) {
+        llx = 2*std::get<Terminal*>(n)->pos_x;
+        lly = 2*std::get<Terminal*>(n)->pos_y;
+      }
+      // blocks in a net
+      else {
+        int x = std::get<Block*>(n)->lower_left_x;
+        int y = std::get<Block*>(n)->lower_left_y;
+        int w = std::get<Block*>(n)->width;
+        int h = std::get<Block*>(n)->height;
+        llx = 2*x + ((x+w)-x); 
+        lly = 2*y + ((y+h)-y); 
+      }
+      if (llx > max_x) {
+        max_x = llx;    
+      }
+      if (llx < min_x) {
+        min_x = llx;
+      }
+      if (lly > max_y) {
+        max_y = lly;
+      }
+      if (lly < min_y) {
+        min_y = lly;
+      }
+    }
+
+    tmp_hpwl = tmp_hpwl + (max_x-min_x) + (max_y-min_y);
+  }
+    
+  return tmp_hpwl;
+
+}
+
 
 
 // compute the lower left x and y of blocks
@@ -639,12 +691,26 @@ inline void SP::compute_block_locations(std::vector<int>& distance,
 
 
 // compute the bounding box area 
-inline void SP::compute_area(const std::vector<int>& distance, int& bb) {
+inline void SP::compute_area(const std::vector<int>& distance, int& bb,
+  const Orientation orientation) {
+
+  size_t limit = 0;
+  if (orientation == 0) {
+    limit = outline_width;
+  }
+  else {
+    limit = outline_height;
+  }
+
   bb = INT_MIN;
   for (auto& [key, value] : map_blocks) {
     bb = bb > -1*distance[value.idx_positive_sequence+1]
             ? bb : -1*distance[value.idx_positive_sequence+1];  
-    
+  
+    int len = -1*distance[value.idx_positive_sequence+1]-limit;
+    if (len > 0) {
+      overshoot_length = overshoot_length + 2*len;
+    }
     //bb_width = bb_width > -1*distance[value.idx_positive_sequence+1]
     //           ? bb_width : -1*distance[value.idx_positive_sequence+1];  
     //bb_height = bb_height > -1*distance[value.idx_positive_sequence+1] 
@@ -1026,13 +1092,14 @@ inline void SP::resume_backup_data(
 
 // pack SP
 inline double SP::pack() {
+  overshoot_length = 0;
   std::vector<int> distance = spfa(Orientation::Horizontal);
   
   compute_block_locations(distance, Orientation::Horizontal);
   //std::cout << "after first compute_block_locations-------------\n";
   //dump(std::cout); 
   
-  compute_area(distance, bb_width);
+  compute_area(distance, bb_width, Orientation::Horizontal);
   
   //std::cout << "after first compute_area-------------\n";
   //dump(std::cout); 
@@ -1043,11 +1110,11 @@ inline double SP::pack() {
   compute_block_locations(distance, Orientation::Vertical);
   //std::cout << "after second compute_block_locations-------------\n";
   //dump(std::cout); 
-  compute_area(distance, bb_height); 
+  compute_area(distance, bb_height, Orientation::Vertical); 
   //std::cout << "after second compute_area-------------\n";
   //dump(std::cout); 
   
-  hpwl = compute_hpwl();
+  hpwl = compute_hpwl()/2;
   //std::cout << "after compute_hpwl-------------\n";
   //dump(std::cout); 
   
@@ -1060,7 +1127,7 @@ inline double SP::pack() {
   //std::cout << alpha*bb_width*bb_height + (1-alpha) * hpwl << '\n'; 
   
 
-  return (alpha*bb_width*bb_height/average_area)+(1-alpha)*hpwl/average_length;
+  return (alpha*bb_width*bb_height/average_area)+(1-alpha)*(hpwl+overshoot_length)/average_length;
   //return alpha*bb_width*bb_height + (1-alpha) * hpwl; 
   //return alpha*bb_width*bb_height; 
 }
@@ -1094,12 +1161,12 @@ inline void SP::run() {
   
   while (current_temperature > frozen_temperature) {
     for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
-      if ((outline_width >= bb_width && outline_height >= bb_height) ||
-          (outline_width >= bb_height && outline_height >= bb_width)) {
-        std::cout << "Found\n";
-        dump(std::cout); 
-        return;  
-      }
+      //if ((outline_width >= bb_width && outline_height >= bb_height) ||
+      //    (outline_width >= bb_height && outline_height >= bb_width)) {
+      //  std::cout << "Found\n";
+      //  dump(std::cout); 
+      //  return;  
+      //}
 
       rv = random_value()%4;
       // neighborhood from four moves   
@@ -1182,7 +1249,6 @@ inline void SP::run() {
 
     current_temperature *= decay;
   }
-
   visualize();
 
   //std::ofstream outFile("./allcost", std::ios::out);
@@ -1379,6 +1445,48 @@ inline void SP::dump_backup(std::ostream& os) const {
   assert(backup_bb_height == bb_height);
   //visualize();
 }
+
+
+inline void SP::dump_solution() const {
+  std::ofstream outFile(output_path, std::ios::out);
+
+  if (!outFile) {
+    std::cerr << "Output file could not be opened or does not exist\n";
+    exit(1);
+  }
+
+  outFile << (hpwl + bb_width*bb_height) << '\n';
+  outFile << hpwl << '\n';
+  outFile << bb_width * bb_height << '\n';
+  outFile << bb_width << ' ' << bb_height << '\n';
+  outFile << 10 << '\n';
+  
+  if ( ((outline_width >= outline_height) && (bb_width >= bb_height)) ||
+       ((outline_width <= outline_height) && (bb_width <= bb_height)) ) {
+    for (auto& [key, value] : map_blocks) {
+      outFile << key << ' '
+              << value.lower_left_x << ' '
+              << value.lower_left_y << ' '
+              << value.lower_left_x + value.width  << ' '
+              << value.lower_left_y + value.height << '\n';   
+    }
+  }
+ 
+  else { 
+    for (auto& [key, value] : map_blocks) {
+      outFile << key << ' '
+              << value.lower_left_y << ' '
+              << value.lower_left_x << ' '
+              << value.lower_left_y + value.height << ' '
+              << value.lower_left_x + value.width  << '\n';   
+    }
+  }
+}
+
+
+
+
+
 
 
 
