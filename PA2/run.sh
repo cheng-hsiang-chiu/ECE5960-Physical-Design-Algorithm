@@ -7,5 +7,6 @@ do
   echo "---------------------------------"
   echo "-----------  "$i"   -------------"
   echo "---------------------------------"
-  time ./fp 0.6 "../input_pa2/"$i".block" "../input_pa2/"$i".nets" "./"$1".out"
+  time ./fp 0.6 "../input_pa2/"$i".block" "../input_pa2/"$i".nets" "./"$i".out"
+  python3 checker.py $i $i".out"
 done
