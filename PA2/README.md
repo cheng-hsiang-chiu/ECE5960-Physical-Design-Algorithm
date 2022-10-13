@@ -123,7 +123,7 @@ D 60 0 100 50
 
 ## Repository structure
 - src : source code
-- benchmarks : eight benchmarks
+- input_pa2 : eight input files
 - unittest : unit test
 - 3rd-party : third party library for unit test usage only
 - paper : papers
@@ -147,6 +147,7 @@ To run the executable, please follow the instructions below.
 Change the input files and output files according to your needs.
 ```
 cd build
+./fp [alpha] [input_block_file] [input_nets_file] [output_file]
 ```
 
 ## Unit Test
@@ -159,8 +160,10 @@ make test
 ## Verify correctness
 To verify the correctness of the executable, please follow the instructions below.
 Modify the input files and output files according to your needs.
+The python file will be copied to the foler `build` when building the executable.
 ```
 cd build
+python3 checker.py [input_name] [output_file]
 ```
 
 ## Run the script
