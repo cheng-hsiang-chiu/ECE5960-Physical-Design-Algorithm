@@ -28,6 +28,12 @@ add_custom_command(
           ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
           ${CMAKE_CURRENT_SOURCE_DIR}/build/run.sh)
 
+add_custom_command(
+  TARGET ${PROJECT_NAME}  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/checker.py
+          ${CMAKE_CURRENT_SOURCE_DIR}/build/checker.py)
+
 #add_custom_command(
 #  TARGET ${PROJECT_NAME} POST_BUILD
 #  COMMAND ${CMAKE_COMMAND} -E copy
