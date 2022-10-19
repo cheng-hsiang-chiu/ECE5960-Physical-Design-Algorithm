@@ -14,6 +14,7 @@ jobs:
       run: cd PA1/build ; ./run.sh
     - name: test PA1 unittest
       run: cd PA1/build ;  make test
+    - run: pip3 install numpy  
     - name: build PA2
       run: cd PA2 ; mkdir build ; cd build ; cmake ../ ; make 
     - name: test input_PA2
