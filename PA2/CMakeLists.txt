@@ -19,6 +19,7 @@ add_executable(fp ${CMAKE_CURRENT_SOURCE_DIR}/src/fp.cpp)
 target_include_directories(fp PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 include(CTest)
+set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 
 add_subdirectory(unittest)
 
