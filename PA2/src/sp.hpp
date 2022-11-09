@@ -897,6 +897,11 @@ inline void SP::update_backup_data(
         positive_sequence[id1]->width; 
       positive_sequence[id1]->backup_height = 
         positive_sequence[id1]->height; 
+      
+      for (auto& [key, value] : map_blocks) {
+        value.backup_lower_left_x = value.lower_left_x;
+        value.backup_lower_left_y = value.lower_left_y;
+      }
       //backup_positive_sequence[id1]->backup_width = 
       //  positive_sequence[id1]->width; 
       //backup_positive_sequence[id1]->backup_height = 
