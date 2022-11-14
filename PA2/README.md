@@ -19,10 +19,11 @@ $$
 where HPWL denotes the half-perimeter wirelength, i.e., half of bounding box length, of net $n_i$. The objective for this problem is to minimize:
 
 $$
-Cost = \alpha A/A_{norm} + (1 - \alpha) W/W_{norm}
+Cost = \alpha A/A_{norm} + (1 - \alpha) W/W_{norm} + penalty
 $$
 
 where $A$ denotes the bounding-box area of the floorplan, Anorm is the average area, $W$ is the total wire length, Wnorm is the average wire length, and $\alpha$, $0 ≦ \alpha ≦ 1$, is a user defined ratio to balance the final area and wirelength. To compute $A_{norm}$ and $W_{norm}$, we can perturb the initial solution $m$ times to obtain $m$ floorplans and compute the average area $A_{norm}$ and the average wire length $W_{norm}$ of these floorplans. The value $m$ is proportional to the problem size. 
+The penalty term is added to pack the blocks in the outline. The idea comes from the [paper](https://https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA2/paper/An_Improved_Simulated_Annealing_Algorithm_With_Excessive_Length_Penalty_for_Fixed-Outline_Floorplanning.pdf)
 
 Note that a floorplan which cannot fit into the given outline is not acceptable.
 
@@ -186,3 +187,4 @@ Simply follow the below format and paste it on the link.
 
 ## Reference
 - Hiroshi Murata, Kunihiro Fujiyoshi, Shigetoshi Nakatake, Yoji Kajitani, "VLSI Module Placement Based on Rectangle-Packing by the Sequence-Pair," in "*IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*," 1996 [[link](./paper/VLSI_Module_Placement_Based_on_Rectangle-Packing_by_the_Sequence-Pair.pdf)]
+- Zhipeng Huang, Zhifeng Lin, Ziran Zhu, Jianli Chen, "An Improved Simulated Annealing Algorithm With Excessive Length Penalty for Fixed-Outline Floorplanning," in "*IEEE Access*," 2020 [[link](./paper/An_Improved_Simulated_Annealing_Algorithm_With_Excessive_Length_Penalty_for_Fixed-Outline_Floorplanning.pdf)]
