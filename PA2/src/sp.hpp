@@ -87,9 +87,6 @@ enum MoveType {
 class SP {
 public:
 
-  //std::vector<double> allcost;
-
-
   std::unordered_map<std::string, Block> map_blocks;
   std::unordered_map<std::string, Terminal> map_terminals;
   std::vector<Net> vec_nets;
@@ -149,8 +146,6 @@ public:
   void visualize() const;
 
   void initialize_sequence();
-
-  //void move1(const Sequence);
 
   std::pair<size_t, size_t> move1();
   
@@ -297,11 +292,6 @@ inline SP::SP(double a, const std::string& input_block_path,
   
   // initialize positive and negative sequences
   initialize_sequence();
-
-  // construct relative locations of blocks
-  // construct_relative_locations(0, num_blocks-1, MoveType::nomove);
-
-  //dump(std::cout);
 }
 
 
@@ -310,21 +300,17 @@ inline void SP::initialize_sequence() {
   positive_sequence.resize(num_blocks); 
   negative_sequence.resize(num_blocks);
   
-  //size_t idx = std::rand()%num_blocks; 
   size_t idx = random_value()%num_blocks;
 
   for (auto& [key, value] : map_blocks) {
     while (positive_sequence[idx] != nullptr) {
-      //idx = std::rand()%num_blocks;
       idx = random_value()%num_blocks;
     }
     positive_sequence[idx] = &(map_blocks[key]);
     map_blocks[key].idx_positive_sequence = idx;
 
-    //idx = std::rand()%num_blocks;
     idx = random_value()%num_blocks;
     while (negative_sequence[idx] != nullptr) {
-      //idx = std::rand()%num_blocks;
       idx = random_value()%num_blocks;
     }
     negative_sequence[idx] = &(map_blocks[key]);
@@ -439,15 +425,33 @@ inline void SP::construct_relative_locations(
 inline std::vector<int> SP::spfa(const Orientation orientation) {
   std::vector<int> distance(num_blocks+2);
   std::fill_n(distance.begin(), num_blocks+2, INT_MAX);
+  std::vector<bool> in_queue(num_blocks+2);
+  std::fill_n(in_queue.begin(), num_blocks+2, false);
+
   distance[0] = 0;
   
   std::deque<Block*> Q;
 
   Q.push_back(&source);
+  in_queue[0] = true;
 
   while (!Q.empty()) {
     Block* u = Q.front();
     Q.pop_front();
+
+    size_t indexu = 0, indexv = 0;
+    if (u->idx_positive_sequence == -1) {
+      if (u == &source) {
+        indexu = 0;
+      }
+      else {
+        indexu = num_blocks+1;
+      }
+    }
+    else {
+      indexu = u->idx_positive_sequence+1;
+    }
+    in_queue[indexu] = false;
   
     std::vector<Block*> vec; 
     if(orientation == Orientation::Horizontal) {
@@ -457,19 +461,7 @@ inline std::vector<int> SP::spfa(const Orientation orientation) {
       vec = u->aboveof;
     }
 
-    size_t indexu = 0, indexv = 0;
     for (auto& blk : vec) {
-      if (u->idx_positive_sequence == -1) {
-        if (u == &source) {
-          indexu = 0;
-        }
-        else {
-          indexu = num_blocks+1;
-        }
-      }
-      else {
-        indexu = u->idx_positive_sequence+1;
-      }
 
       if (blk->idx_positive_sequence == -1) {
         if (blk == &source) {
@@ -494,64 +486,15 @@ inline std::vector<int> SP::spfa(const Orientation orientation) {
       if (distance[indexu] + weight < distance[indexv]) {
         distance[indexv] = distance[indexu] + weight;
 
-        if (std::find(Q.begin(), Q.end(), blk) == Q.end()) {
+        if (in_queue[indexv] == false) {
           Q.push_back(blk);
+          in_queue[indexv] = true;
         }
       }
     }
   }
   return distance;
 }
-
-
-/*
-// compute HPWL
-inline int SP::compute_hpwl() const {
-  int tmp_hpwl = 0;
-  for (auto& net : vec_nets) {
-    std::vector<Terminal*> terminals;
-
-    int max_x = 0, min_x = INT_MAX, max_y = 0, min_y = INT_MAX;
-    int llx = 0, lly = 0;
-    for (auto& n : net.net) {
-      // terminal in a net
-      if (std::holds_alternative<Terminal*>(n)) {
-        terminals.push_back(std::get<Terminal*>(n));
-      }
-      // blocks in a net
-      else {
-        llx = std::get<Block*>(n)->lower_left_x + std::get<Block*>(n)->width/2;
-        lly = std::get<Block*>(n)->lower_left_y + std::get<Block*>(n)->height/2; 
-        if (llx > max_x) {
-          max_x = llx;    
-        }
-        if (llx < min_x) {
-          min_x = llx;
-        }
-        if (lly > max_y) {
-          max_y = lly;
-        }
-        if (lly < min_y) {
-          min_y = lly;
-        }
-      }
-    }
-
-    tmp_hpwl = tmp_hpwl + (max_x-min_x) + (max_y-min_y);
-    
-    // length to terminals
-    int center_x = (max_x + min_x)/2;
-    int center_y = (max_y + min_y)/2;
-    for (auto& t : terminals) {
-      tmp_hpwl = tmp_hpwl + 
-             std::abs(center_x-static_cast<int>(t->pos_x)) + 
-             std::abs(center_y-static_cast<int>(t->pos_y));  
-    }
-  }
-  
-  return tmp_hpwl;
-}
-*/
 
 
 // compute hpwl
@@ -654,7 +597,6 @@ inline void SP::compute_area(const std::vector<int>& distance, int& bb,
       overshoot_length = overshoot_length + penalty_ratio*len;
     }
   }
-  //std::cout << "bb = " << bb << '\n';
 }
 
 
@@ -785,14 +727,6 @@ inline void SP::update_backup_data(
           positive_sequence[i]->rightof;
         positive_sequence[i]->backup_aboveof = 
           positive_sequence[i]->aboveof;
-        //backup_positive_sequence[i]->backup_rightof = 
-        //  positive_sequence[i]->rightof;
-        //backup_positive_sequence[i]->backup_aboveof = 
-        //  positive_sequence[i]->aboveof;
-        //backup_positive_sequence[i]->backup_lower_left_x =
-        //  positive_sequence[i]->lower_left_x;
-        //backup_positive_sequence[i]->backup_lower_left_y =
-        //  positive_sequence[i]->lower_left_y;
       }
 
       for (auto& [key, value] : map_blocks) {
@@ -814,14 +748,6 @@ inline void SP::update_backup_data(
           negative_sequence[i]->rightof;
         negative_sequence[i]->backup_aboveof = 
           negative_sequence[i]->aboveof;
-        //backup_negative_sequence[i]->backup_rightof = 
-        //  negative_sequence[i]->rightof;
-        //backup_negative_sequence[i]->backup_aboveof = 
-        //  negative_sequence[i]->aboveof;
-        //backup_negative_sequence[i]->backup_lower_left_x =
-        //  negative_sequence[i]->lower_left_x;
-        //backup_negative_sequence[i]->backup_lower_left_y =
-        //  negative_sequence[i]->lower_left_y;
       }
       
       for (auto& [key, value] : map_blocks) {
@@ -842,26 +768,14 @@ inline void SP::update_backup_data(
           positive_sequence[i]->rightof;
         positive_sequence[i]->backup_aboveof =
           positive_sequence[i]->aboveof;
-        //backup_positive_sequence[i]->backup_rightof = 
-        //  positive_sequence[i]->rightof;
-        //backup_positive_sequence[i]->backup_aboveof =
-        //  positive_sequence[i]->aboveof;
-        //backup_positive_sequence[i]->backup_lower_left_x =
-        //  positive_sequence[i]->lower_left_x;
-        //backup_positive_sequence[i]->backup_lower_left_y =
-        //  positive_sequence[i]->lower_left_y;
       }
 
       
       nid1 = positive_sequence[id1]->idx_negative_sequence;
       nid2 = positive_sequence[id2]->idx_negative_sequence;
-      //nid1 = backup_positive_sequence[id1]->idx_negative_sequence;
-      //nid2 = backup_positive_sequence[id2]->idx_negative_sequence;
       std::swap(backup_negative_sequence[nid1], backup_negative_sequence[nid2]);
       negative_sequence[nid1]->backup_idx_negative_sequence = nid1;
       negative_sequence[nid2]->backup_idx_negative_sequence = nid2;
-      //backup_negative_sequence[nid1]->backup_idx_negative_sequence = nid1;
-      //backup_negative_sequence[nid2]->backup_idx_negative_sequence = nid2;
     
       if (nid1 > nid2) {
         std::swap(nid1, nid2);
@@ -872,14 +786,6 @@ inline void SP::update_backup_data(
           negative_sequence[i]->rightof;
         negative_sequence[i]->backup_aboveof = 
           negative_sequence[i]->aboveof;
-        //backup_negative_sequence[i]->backup_rightof = 
-        //  negative_sequence[i]->rightof;
-        //backup_negative_sequence[i]->backup_aboveof = 
-        //  negative_sequence[i]->aboveof;
-        //backup_negative_sequence[i]->backup_lower_left_x =
-        //  negative_sequence[i]->lower_left_x;
-        //backup_negative_sequence[i]->backup_lower_left_y =
-        //  negative_sequence[i]->lower_left_y;
       }
       
       for (auto& [key, value] : map_blocks) {
@@ -902,10 +808,6 @@ inline void SP::update_backup_data(
         value.backup_lower_left_x = value.lower_left_x;
         value.backup_lower_left_y = value.lower_left_y;
       }
-      //backup_positive_sequence[id1]->backup_width = 
-      //  positive_sequence[id1]->width; 
-      //backup_positive_sequence[id1]->backup_height = 
-      //  positive_sequence[id1]->height; 
     break;
 
     case 0:
@@ -942,12 +844,6 @@ inline void SP::resume_backup_data(
        
         positive_sequence[i]->aboveof = 
         positive_sequence[i]->backup_aboveof;
-         
-        //positive_sequence[i]->lower_left_x = 
-        //positive_sequence[i]->backup_lower_left_x;
-
-        //positive_sequence[i]->lower_left_y = 
-        //positive_sequence[i]->backup_lower_left_y;
       }
 
       for (auto& [key, value] : map_blocks) {
@@ -971,12 +867,6 @@ inline void SP::resume_backup_data(
 
         negative_sequence[i]->aboveof = 
         negative_sequence[i]->backup_aboveof;
-     
-        //negative_sequence[i]->lower_left_x = 
-        //negative_sequence[i]->backup_lower_left_x; 
-      
-        //negative_sequence[i]->lower_left_y = 
-        //negative_sequence[i]->backup_lower_left_y; 
       }
       
       for (auto& [key, value] : map_blocks) {
@@ -1000,12 +890,6 @@ inline void SP::resume_backup_data(
 
         positive_sequence[i]->aboveof = 
         positive_sequence[i]->backup_aboveof;
-        
-        //positive_sequence[i]->lower_left_x = 
-        //positive_sequence[i]->backup_lower_left_x;
-        //
-        //positive_sequence[i]->lower_left_y = 
-        //positive_sequence[i]->backup_lower_left_y;
       }
 
       nid1 = positive_sequence[id1]->idx_negative_sequence;
@@ -1028,12 +912,6 @@ inline void SP::resume_backup_data(
 
         negative_sequence[i]->aboveof = 
         negative_sequence[i]->backup_aboveof;
-
-        //negative_sequence[i]->lower_left_x = 
-        //negative_sequence[i]->backup_lower_left_x;
-
-        //negative_sequence[i]->lower_left_y = 
-        //negative_sequence[i]->backup_lower_left_y;
       }
       
       for (auto& [key, value] : map_blocks) {
@@ -1073,40 +951,24 @@ inline double SP::pack() {
   std::vector<int> distance = spfa(Orientation::Horizontal);
   
   compute_block_locations(distance, Orientation::Horizontal);
-  //std::cout << "after first compute_block_locations-------------\n";
-  //dump(std::cout); 
-  
   compute_area(distance, bb_width, Orientation::Horizontal);
   
-  //std::cout << "after first compute_area-------------\n";
-  //dump(std::cout); 
   
   distance = spfa(Orientation::Vertical);
-  //std::cout << "after second spfa-------------\n";
-  //dump(std::cout); 
+  
   compute_block_locations(distance, Orientation::Vertical);
-  //std::cout << "after second compute_block_locations-------------\n";
-  //dump(std::cout); 
   compute_area(distance, bb_height, Orientation::Vertical); 
-  //std::cout << "after second compute_area-------------\n";
-  //dump(std::cout); 
   
   hpwl = compute_hpwl()/2;
-  //std::cout << "after compute_hpwl-------------\n";
-  //dump(std::cout); 
   
   average_area = 
     (average_area*(num_iterations-1) + bb_width*bb_height)/static_cast<double>(num_iterations);
   
   average_length = 
     (average_length*(num_iterations-1) + hpwl)/static_cast<double>(num_iterations); 
-  //std::cout << "hpwl = " << hpwl << '\n';
-  //std::cout << alpha*bb_width*bb_height + (1-alpha) * hpwl << '\n'; 
   
 
   return (alpha*bb_width*bb_height/average_area)+(1-alpha)*(hpwl+overshoot_length)/average_length;
-  //return alpha*bb_width*bb_height + (1-alpha) * hpwl; 
-  //return alpha*bb_width*bb_height; 
 }
 
 
@@ -1114,24 +976,16 @@ inline double SP::pack() {
 inline void SP::run() {
   bool pass = false;
   double current_temperature = initial_temperature;
-  //std::cout << "before first pack------\n";
-  //dump(std::cout); 
+  
   // first run
   ++num_iterations;
   construct_relative_locations(0, num_blocks-1, MoveType::nomove);
   double backup_cost = pack();
   double cost = backup_cost;
  
-  //allcost.push_back(cost); 
   // backup data  
-  //std::cout << "before initialize_backup_data\n\n";
-  //dump(std::cout); 
   initialize_backup_data(); 
-  //std::cout << "after initialize_backup_data\n\n";
-  //dump(std::cout); 
-  //dump_backup(std::cout);
   
-  //std::cout << "what the hell\n\n\n\n";
   // SA 
   double delta = 0.0;
   size_t rv;
@@ -1141,12 +995,6 @@ inline void SP::run() {
   do { 
     while (current_temperature > frozen_temperature) {
       for (size_t ite = 0; ite < iterations_per_temperature; ++ite) {
-        //if ((outline_width >= bb_width && outline_height >= bb_height) ||
-        //    (outline_width >= bb_height && outline_height >= bb_width)) {
-        //  std::cout << "Found\n";
-        //  dump(std::cout); 
-        //  return;  
-        //}
 
         rv = random_value()%4;
         // neighborhood from four moves   
@@ -1183,18 +1031,12 @@ inline void SP::run() {
         construct_relative_locations(pair_idx.first, pair_idx.second, move_type);
         ++num_iterations;
         cost = pack(); 
-        delta = (cost - backup_cost)*1000;
-        //std::cout << "cost = " << cost << ", delta = " << delta << '\n';
-        //allcost.push_back(cost);
+        delta = (cost - backup_cost) * 1000;
+        
         // better neighbor, always accept it
         if (delta < 0) {
           update_backup_data(pair_idx.first, pair_idx.second, move_type);
           backup_cost = cost;
-          //allcost.push_back(cost);
-          //std::cout << "\n\n\naccept\n\n\n";
-          //dump(std::cout); 
-          //dump_backup(std::cout);
-          //return;
         }
 
         // worse neighbor
@@ -1205,11 +1047,6 @@ inline void SP::run() {
           if (prob > static_cast<double>(random_value())/max_dist) { 
             update_backup_data(pair_idx.first, pair_idx.second, move_type);  
             backup_cost = cost;
-            //allcost.push_back(cost);
-            //std::cout << "accept\n";
-            //dump(std::cout); 
-            //dump_backup(std::cout);
-            //return;
           }
 
           // decline the worse neighbor
@@ -1219,10 +1056,6 @@ inline void SP::run() {
             --num_iterations;
 
             resume_backup_data(pair_idx.first, pair_idx.second, move_type);
-            //std::cout << "deny\n";
-            //dump(std::cout); 
-            //dump_backup(std::cout);
-            //return;
           }
         }
       }
@@ -1263,12 +1096,6 @@ inline void SP::run() {
   while(pass == false);
 
   visualize();
-
-  //std::ofstream outFile("./allcost", std::ios::out);
-
-  //for (auto& ac : allcost) {
-  //  outFile << ac << '\n';
-  //}
 }
 
 
@@ -1396,27 +1223,6 @@ inline void SP::dump_backup(std::ostream& os) const {
     assert(value.backup_idx_positive_sequence == value.idx_positive_sequence);
     assert(value.backup_idx_negative_sequence == value.idx_negative_sequence);
   }
-  
-  //for (auto& [key, value] : map_terminals) {
-  //  assert(key == value.name);
-  //  os << "Terminal " << value.name
-  //     << " at x : "  << value.pos_x
-  //     << ", y : "    << value.pos_y
-  //     << '\n';
-  //}
-
-  //for (auto& vec : vec_nets) {
-  //  os << "Net : ";
-  //  for (auto& v : vec.net) {
-  //    if (std::holds_alternative<Block*>(v)) {
-  //      os << (std::get<Block*>(v))->name    << "(b) ";
-  //    }
-  //    else {
-  //      os << (std::get<Terminal*>(v))->name << "(t) ";
-  //    }
-  //  }
-  //  os << '\n';
-  //}
 
   assert(positive_sequence == backup_positive_sequence);
   os << "Backup positive sequence : ";
