@@ -43,16 +43,6 @@ The sample input for the format defines a net with three pins, `p1`, `p2`, and `
 
 In the program output, you are asked to give the number of pins, the routing wirelength, and the coordinates of routed net segments. Note that you can output the H-line/V-line in any order.
 
-## Language
-
-You can implement this assignment using any language you like. However, we recommend `C` or `C++` for performance reason.
-
-## Platform
-
-You need to evaluate your program on the Linux server at `twhuang-server-01.ece.utah.edu`.
-
-Please email Dr. Huang (tsung-wei.huang at utah.edu) for creating an account to log in.
-
 
 ## Program Command 
 
