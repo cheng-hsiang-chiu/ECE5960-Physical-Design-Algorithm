@@ -57,7 +57,7 @@ public:
   void dump() const;
 private:
 
-  int _minKey(std::vector<int>&, std::vector<bool>&);
+  int _minKey(std::vector<int>&, std::vector<bool>&, const int);
   
   int _length(const int, const int);
 };
@@ -163,15 +163,76 @@ inline void ST::dump() const {
 }
 
 
-inline int ST::_minKey(std::vector<int>& key, std::vector<bool>& intree) {
-  int min = INT_MAX, min_index;
+inline int ST::_minKey(std::vector<int>& key,
+  std::vector<bool>& intree, const int center) {
+  
+  int min = INT_MAX, min_index = -1;
+  int range = 3;
+  int target;
+  int r = 0;
+  
+  while (1) {
+    for (; r < range; ++r) {
+      //std::cout << "r = " << r << ", range = " << range << '\n';
+      target = center-r;
+      if (target >= 0) {
+        if (intree[target] == false && key[target] < min) {
+          min = key[target];
+          min_index = target;
+        }
+      }
+      target = center+r;
+      if (target < number_pins) {
+        //std::cout << "target = " << target << '\n';
+        if (intree[target] == false && key[target] < min) {
+          min = key[target];
+          min_index = target;
+        }
+      }
+    }
 
-  for (int v = 0; v < number_pins; ++v) {
-    if (intree[v] == false && key[v] < min) {
-      min = key[v];
-      min_index = v;
+    if (min_index != -1) {
+      break;
+    }
+    r = range;
+    range += 2;
+  }
+
+  for (r = 1; r < range; ++r) {
+    target = min_index - r;
+     
+    if (target >= 0 && intree[target] == false) {
+      int len = _length(min_index, target);
+      if (len < key[target]) {
+        parent[target] = min_index;
+        key[target] = len;
+      }
+    }
+    target = min_index + r;
+    if (target < number_pins && intree[target] == false) {
+      int len = _length(min_index, target);
+      if (len < key[target]) {
+        parent[target] = min_index;
+        key[target] = len;
+      }
     }
   }
+ 
+  //for (int v = 0; v < number_pins; ++v) {
+  //  if (intree[v] == false) {
+  //    int len = _length(u, v);
+  //    if (len < key[v]) {
+  //      parent[v] = u;
+  //      key[v] = len;
+  //    }
+  //  }
+  //}
+  //for (int v = 0; v < number_pins; ++v) {
+  //  if (intree[v] == false && key[v] < min) {
+  //    min = key[v];
+  //    min_index = v;
+  //  }
+  //}
   return min_index;
 }
 
@@ -183,6 +244,8 @@ inline void ST::run() {
   // always start with the first element in pins
   key[0] = 0;
   parent[0] = -1;
+  
+  int center = 0;
 
   // The Stenir tree will have number_pins vertices
   // and number_pins-1 edges
@@ -190,20 +253,21 @@ inline void ST::run() {
     // pick the minimum key vertex from the
     // set of vertices not yet included in the tree
     //std::cout << "count = " << count << '\n';
-    int u = _minKey(key, intree);
-
+    int u = _minKey(key, intree, center);
+    //std::cout << "u = " << u << '\n';
+    center = u;
     // add u in the tree
     intree[u] = true;
 
-    for (int v = 0; v < number_pins; ++v) {
-      if (intree[v] == false) {
-        int len = _length(u, v);
-        if (len < key[v]) {
-          parent[v] = u;
-          key[v] = len;
-        }
-      }
-    }
+    //for (int v = 0; v < number_pins; ++v) {
+    //  if (intree[v] == false) {
+    //    int len = _length(u, v);
+    //    if (len < key[v]) {
+    //      parent[v] = u;
+    //      key[v] = len;
+    //    }
+    //  }
+    //}
   }
 }
 
@@ -216,12 +280,48 @@ inline int ST::_length(const int u, const int v) {
 }
 
 inline void ST::dump_solution() {
+  size_t total_length = 0;
   for (int i = 1; i < number_pins; ++i) {
-    std::cout << pins[parent[i]].name << " links to " << pins[i].name
-              << " with length = " << _length(parent[i], i)
-              << '\n';
+    //std::cout << pins[parent[i]].name << " links to " << pins[i].name
+    //          << " with length = " << _length(parent[i], i)
+    //          << '\n';
+    ++total_length += _length(parent[i], i);
+  }
+  std::cout << total_length << '\n';
+  
+  std::ofstream outFile(output_path, std::ios::out);
+
+  if (!outFile) {
+    std::cerr << "Output file could not be opened or does not exist\n";
+    exit(1);
   }
 
+  outFile << "NumRoutedPins = " << number_pins << '\n';
+  outFile << "WireLength = " << total_length << '\n';
+  for (int i = 1; i < number_pins; ++i) {
+    if (pins[i].coordinate.y != pins[parent[i]].coordinate.y) {
+      outFile << "V-line ("
+              << pins[i].coordinate.x
+              << ","
+              << pins[i].coordinate.y
+              << ") ("
+              << pins[i].coordinate.x
+              << ","
+              << pins[parent[i]].coordinate.y
+              <<")\n";
+    }
+    if (pins[i].coordinate.x != pins[parent[i]].coordinate.x) {
+      outFile << "H-line ("
+              << pins[i].coordinate.x
+              << ","
+              << pins[parent[i]].coordinate.y
+              << ") ("
+              << pins[parent[i]].coordinate.x
+              << ","
+              << pins[parent[i]].coordinate.y
+              <<")\n";
+    }
+  }
 }
 
 

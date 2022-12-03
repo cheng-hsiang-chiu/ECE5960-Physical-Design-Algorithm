@@ -14,20 +14,20 @@ set(ST_3RD_PARTY_DIR ${PROJECT_SOURCE_DIR}/3rd-party)
 
 add_library(error_settings INTERFACE)
 
-add_executable(main ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+add_executable(st ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 
-target_include_directories(main PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_include_directories(st PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 #include(CTest)
 #set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 
 #add_subdirectory(unittest)
 
-#add_custom_command(
-#  TARGET ${PROJECT_NAME}  POST_BUILD
-#  COMMAND ${CMAKE_COMMAND} -E copy
-#          ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
-#          ${CMAKE_CURRENT_SOURCE_DIR}/build/run.sh)
+add_custom_command(
+  TARGET ${PROJECT_NAME}  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_CURRENT_SOURCE_DIR}/run.sh
+          ${CMAKE_CURRENT_SOURCE_DIR}/build/run.sh)
 #
 #add_custom_command(
 #  TARGET ${PROJECT_NAME}  POST_BUILD
