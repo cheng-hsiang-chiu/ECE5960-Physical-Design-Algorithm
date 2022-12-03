@@ -15,8 +15,8 @@ int main(int argc, char** argv) {
   std::string output_path(argv[2]);
 
   st::ST st(input_path, output_path);
-  //st.run();
-  //st.dump_solution();
+  st.run();
+  st.dump_solution();
 
   return 0;
 
