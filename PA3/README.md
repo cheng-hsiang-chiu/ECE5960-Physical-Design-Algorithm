@@ -1,5 +1,12 @@
 # Steiner-Tree Construction
 
+## What is this about?
+This is a program assianment of ECE5960-Physical-Design-Algorithm.
+The purpose of this assignment is to implement Steiner-Tree Construction.
+Refer to [Problem Statement](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA3/README.md#problem-statement),
+[Input Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA3/README.md#input-format) and [Output Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA3/README.md#output-format)
+for more information.
+
 ## Problem Description
 
 This programming assignment asks you to implement a Steiner-tree router 
@@ -24,7 +31,7 @@ where $U$ is the number of unconnected pins and $H$ is the half perimeter wirele
 
 Note that a route which has any net routed out of the chip boundary is a failed result.
 
-## Input
+## Input Format
 
 The input file starts with the chip boundary, followed by the description of pins. The description of each pin contains the keyword PIN, followed by the name and the coordinate of the pin. 
 
@@ -34,7 +41,7 @@ The input file starts with the chip boundary, followed by the description of pin
 
 The sample input for the format defines a net with three pins, `p1`, `p2`, and `p3`.
 
-## Output
+## Output Format
 
 | Input Format | Example |
 | ------------ | ------- |
@@ -44,19 +51,37 @@ The sample input for the format defines a net with three pins, `p1`, `p2`, and `
 In the program output, you are asked to give the number of pins, the routing wirelength, and the coordinates of routed net segments. Note that you can output the H-line/V-line in any order.
 
 
-## Program Command 
+## Repository structure
+- src : source code
+- input_pa3 : eleven input files
+- CMakeLists.txt : cmake file
+- run.sh : a script to run the executable and measure runtime for all benchmarks
+- PA3-report.pdf : a report
 
-Your program should support the following command-line parameters:
-
-
-```bash
-[executable file name] [input file name] [output file name]
+## Build
+To build the executable, please follow the instructions below. The default compiler is clang++.
+```
+mkdir build
+cd build
+cmake ../
+make
 ```
 
-For example:
-
-```bash
-~$ ./router input_pa4/case1 output1
+## Run
+To run the executable, please follow the instructions below.
+Change the input files and output files according to your needs.
+```
+cd build
+./st [input] [output]
 ```
 
 
+## Run the script
+Instead of running the executable for the benchmark one by one,
+the `run.sh` is used to run the executable and measure the runtime for all benchmarks.
+The script will be copied to the folder `build` when building the executable.
+```
+cd build
+chmod 744 ./run.sh
+./run.sh
+```
