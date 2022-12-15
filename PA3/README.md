@@ -7,7 +7,7 @@ Refer to [Problem Statement](https://github.com/cheng-hsiang-chiu/ECE5960-Physic
 [Input Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA3/README.md#input-format) and [Output Format](https://github.com/cheng-hsiang-chiu/ECE5960-Physical-Design-Algorithm/blob/master/PA3/README.md#output-format)
 for more information.
 
-## Problem Description
+## Problem Statement
 
 This programming assignment asks you to implement a Steiner-tree router 
 that can connect pins for a single net on a single-layer chip. 
